@@ -1,0 +1,161 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$defs": {
+    "subscription": {
+      "type": "object",
+      "description": "Subscription details for Usage-based and Condition-based triggers.",
+      "properties": {
+        "api": {
+          "type": "string",
+          "enum": [
+            "alarms",
+            "events",
+            "measurements",
+            "managedobjects",
+            "operations"
+          ],
+          "description": "API type (alarms, events, measurements, managedobjects, operations)."
+        },
+        "typeFilter": { "type": "string", "description": "Type filter for the subscription." }
+      },
+      "required": ["api", "typeFilter"]
+    }
+  },
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "integer",
+      "description": "Unique identifier for the maintenance entry."
+    },
+    "name": {
+      "type": "string",
+      "description": "Name of the maintenance entry."
+    },
+    "description": {
+      "type": "string",
+      "description": "Detailed description of the maintenance entry."
+    },
+    "startDate": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Start date and time for the maintenance."
+    },
+    "endDate": {
+      "type": "string",
+      "format": "date-time",
+      "description": "End date and time for the maintenance."
+    },
+    "active": {
+      "type": "string",
+      "description": "Indicates whether the maintenance entry is active."
+    },
+    "on": {
+      "type": "array",
+      "description": "List of maintenance triggers based on type.",
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["Time-based"],
+                "description": "Type of maintenance trigger."
+              },
+              "interval": {
+                "type": "string",
+                "description": "Interval for time-based maintenance."
+              }
+            },
+            "required": ["type", "interval"]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["Usage-based"],
+                "description": "Usage-based maintenance trigger."
+              },
+              "counters": {
+                "type": "array",
+                "description": "List of counters for usage-based maintenance.",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "subscription": {
+                      "$ref": "#/$defs/subscription"
+                    },
+                    "valueFragment": {
+                      "type": "string",
+                      "description": "Fragment or field to extract the value from."
+                    },
+                    "cycle": {
+                      "type": "string",
+                      "description": "Cycle duration for the counter.",
+                      "nullable": true
+                    },
+                    "threshold": {
+                      "type": "string",
+                      "description": "Threshold value for the counter.",
+                      "nullable": true
+                    },
+                    "operator": {
+                      "type": "string",
+                      "enum": ["gt", "lt", "eq"],
+                      "description": "Operator for the condition. Allowed: gt (greater than), lt (less than), eq (equal)."
+                    }
+                  },
+                  "required": ["valueFragment"],
+                  "oneOf": [
+                    { "required": ["cycle"], "not": { "required": ["threshold"] } },
+                    { "required": ["threshold"], "not": { "required": ["cycle"] } }
+                  ]
+                }
+              }
+            },
+            "required": ["type", "counters"]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["Condition-based"],
+                "description": "Condition-based maintenance trigger."
+              },
+              "conditions": {
+                "type": "array",
+                "description": "List of conditions for condition-based maintenance.",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "subscription": {
+                      "$ref": "#/$defs/subscription"
+                   },
+                    "valueFragment": {
+                      "type": "string",
+                      "description": "Fragment or field to extract the value from."
+                    },
+                    "operator": {
+                      "type": "string",
+                      "enum": ["gt", "lt", "eq"],
+                      "description": "Operator for the condition. Allowed: gt (greater than), lt (less than), eq (equal)."
+                    },
+                    "value": {
+                      "type": ["string", "number"],
+                      "description": "Value to compare against for the condition."
+                    }
+                  },
+                  "required": ["valueFragment", "operator", "value"]
+                }
+              }
+            },
+            "required": ["type", "conditions"]
+          }
+        ]
+      }
+    }
+  },
+  "required": ["id", "name", "description", "startDate", "endDate", "active", "on"]
+}

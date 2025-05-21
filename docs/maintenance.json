@@ -1,0 +1,75 @@
+{
+  "id": 1222434,
+  "name": "Complex Maintenance Plan",
+  "description": "Regular maintenance for equipment.",
+  "startDate": "2024-01-01T00:00:00Z",
+  "endDate": "2026-12-31T23:59:59Z",
+  "active": "active",
+  "on": [
+    {
+      "type": "Time-based",
+      "interval": "30d"
+    },
+    {
+      "type": "Usage-based",
+      "counters": [
+        {
+          "subscription": {
+            "api": "measurements",
+            "typeFilter": "'operatingHours'"
+          },
+          "valueFragment": "operatingHours.t",
+          "cycle": "1500"
+        },
+        {
+          "subscription": {
+            "api": "events",
+            "typeFilter": "'operatingHours'"
+          },
+          "valueFragment": "text",
+          "threshold": "1000"
+        },
+        {
+          "subscription": {
+            "api": "managedobjects",
+            "typeFilter": "'operatingHours'"
+          },
+          "valueFragment": "operatingHours",
+          "threshold": "1000"
+        }
+      ]
+    },
+    {
+      "type": "Condition-based",
+      "conditions": [
+        {
+          "subscription": {
+            "api": "measurements",
+            "typeFilter": "'c8y_Temperature'"
+          },
+          "valueFragment": "c8y_Temperature.t",
+          "operator": "gt",
+          "value": 80
+        },
+        {
+          "subscription": {
+            "api": "events",
+            "typeFilter": "'statusChange'"
+          },
+          "valueFragment": "text",
+          "operator": "eq",
+          "value": "200:12"
+        },
+        {
+          "subscription": {
+            "api": "alarms",
+            "typeFilter": "'my_alarm'"
+          },
+          "alarm": "my_alarm.count",
+          "operator": "eq",
+          "value": "10"
+        }
+      ]
+    }
+  ]
+}

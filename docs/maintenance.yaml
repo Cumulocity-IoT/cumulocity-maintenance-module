@@ -1,0 +1,29 @@
+maintenancePlan:
+  - type: "Time-based"
+    startDate: "2023-01-01T00:00:00Z"
+    interval: "30d" # daily d, weekly w, monthly m, yearly y
+  - type: "Usage-based"
+    startDate: "2023-01-01T00:00:00Z"
+    counters:
+      - measurement: "operating_hours"
+        threshold: "1000"
+        cycle: "1500"
+      - measurement: "operating_hours"
+        threshold: "1000"
+      - object: "operting_hours"
+        threshold: "1000"
+  - type: "Condition-based"
+    startDate: "2023-01-01T00:00:00Z"
+    conditions:
+      - measurement: "temperature"
+        operator: "gt"
+        value: 80
+      - event: "statusChange"
+        operator: "eq"
+        value: "200:12"
+      - alarm: "my_alarm.severity"
+        operator: "eq"
+        value: "WARNING"
+      - object: "my_fragment"
+        operator: "eq"
+        value: "my_value"
