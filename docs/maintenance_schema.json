@@ -18,10 +18,12 @@
         },
         "typeFilter": { "type": "string", "description": "Type filter for the subscription." }
       },
-      "required": ["api", "typeFilter"]
+      "required": ["api", "typeFilter"],
+      "additionalProperties": false
     }
   },
   "type": "object",
+  "additionalProperties": false,
   "examples": [
     {
       "id": 101,
@@ -41,7 +43,8 @@
   "properties": {
     "id": {
       "type": "integer",
-      "description": "Unique identifier for the maintenance entry."
+      "description": "Unique identifier for the maintenance entry.",
+      "readOnly": true
     },
     "name": {
       "type": "string",
@@ -85,7 +88,8 @@
                 "examples": ["P3M", "P30D", "P1Y6M"]
               }
             },
-            "required": ["type", "interval"]
+            "required": ["type", "interval"],
+            "additionalProperties": false
           },
           {
             "type": "object",
@@ -117,22 +121,19 @@
                       "type": "integer",
                       "description": "Threshold value for the counter.",
                       "nullable": true
-                    },
-                    "operator": {
-                      "type": "string",
-                      "enum": ["gt", "lt", "eq"],
-                      "description": "Operator for the condition. Allowed: gt (greater than), lt (less than), eq (equal)."
                     }
                   },
                   "required": ["valueFragment"],
                   "oneOf": [
                     { "required": ["cycle"], "not": { "required": ["threshold"] } },
                     { "required": ["threshold"], "not": { "required": ["cycle"] } }
-                  ]
+                  ],
+                  "additionalProperties": false
                 }
               }
             },
-            "required": ["type", "counters"]
+            "required": ["type", "counters"],
+            "additionalProperties": false
           },
           {
             "type": "object",
@@ -165,11 +166,13 @@
                       "description": "Value to compare against for the condition."
                     }
                   },
-                  "required": ["valueFragment", "operator", "value"]
+                  "required": ["valueFragment", "operator", "value"],
+                  "additionalProperties": false
                 }
               }
             },
-            "required": ["type", "conditions"]
+            "required": ["type", "conditions"],
+            "additionalProperties": false
           }
         ]
       }

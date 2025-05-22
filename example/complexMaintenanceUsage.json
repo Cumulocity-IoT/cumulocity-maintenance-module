@@ -1,0 +1,23 @@
+{
+  "id": 201,
+  "name": "Operating Hours Based Maintenance",
+  "description": "Triggers maintenance when operating hours for a device exceed 1999 hours, based on the 'operatingHours' measurement type.",
+  "startDate": "2025-05-22T00:00:00Z",
+  "endDate": "2026-05-22T00:00:00Z",
+  "active": true,
+  "on": [
+    {
+      "type": "Usage-based",
+      "counters": [
+        {
+          "subscription": {
+            "api": "measurements",
+            "typeFilter": "operatingHours"
+          },
+          "valueFragment": "operatingHours.t",
+          "threshold": 1999
+        }
+      ]
+    }
+  ]
+}
