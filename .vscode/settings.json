@@ -1,0 +1,10 @@
+{
+  "json.schemas": [
+    {
+      "fileMatch": [
+        "/example/simpleMaintenance.json"
+      ],
+      "url": "/docs/maintenance_schema.json"
+    }
+  ]
+}

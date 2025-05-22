@@ -22,6 +22,22 @@
     }
   },
   "type": "object",
+  "examples": [
+    {
+      "id": 101,
+      "name": "Quarterly Server Check",
+      "description": "Perform server health checks and updates every quarter.",
+      "startDate": "2025-01-01T08:00:00Z",
+      "endDate": "2025-12-31T17:00:00Z",
+      "active": true,
+      "on": [
+        {
+          "type": "Time-based",
+          "interval": "P3M"
+        }
+      ]
+    }
+  ],
   "properties": {
     "id": {
       "type": "integer",
@@ -46,7 +62,7 @@
       "description": "End date and time for the maintenance."
     },
     "active": {
-      "type": "string",
+      "type": "boolean",
       "description": "Indicates whether the maintenance entry is active."
     },
     "on": {
@@ -64,7 +80,9 @@
               },
               "interval": {
                 "type": "string",
-                "description": "Interval for time-based maintenance."
+                "description": "Interval for time-based maintenance using ISO 8601 duration format.",
+                "pattern": "^P(?!$)(\\d+Y)?(\\d+M)?(\\d+W)?(\\d+D)?(T(?!$)(\\d+H)?(\\d+M)?(\\d+S)?)?$",
+                "examples": ["P3M", "P30D", "P1Y6M"]
               }
             },
             "required": ["type", "interval"]
@@ -91,12 +109,12 @@
                       "description": "Fragment or field to extract the value from."
                     },
                     "cycle": {
-                      "type": "string",
+                      "type": "integer",
                       "description": "Cycle duration for the counter.",
                       "nullable": true
                     },
                     "threshold": {
-                      "type": "string",
+                      "type": "integer",
                       "description": "Threshold value for the counter.",
                       "nullable": true
                     },
@@ -132,7 +150,7 @@
                   "properties": {
                     "subscription": {
                       "$ref": "#/$defs/subscription"
-                   },
+                    },
                     "valueFragment": {
                       "type": "string",
                       "description": "Fragment or field to extract the value from."
