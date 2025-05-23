@@ -1,4 +1,7 @@
 {
+  "title": "Maintenance Plan Schema",
+  "description": "Schema for defining maintenance plan entries in the system. Each entry includes a unique ID, name, description, start and end dates, an active status, and a list of triggers that activate the maintenance plan. The triggers can be time-based, usage-based, or condition-based.",
+  "version": "1.0.0",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$defs": {
     "subscription": {
@@ -70,7 +73,7 @@
     },
     "on": {
       "type": "array",
-      "description": "List of maintenance triggers based on type.",
+      "description": "List of maintenance triggers. The maintenance plan is activated if ANY of these trigger conditions are met (OR connection).",
       "items": {
         "oneOf": [
           {
@@ -99,40 +102,37 @@
                 "enum": ["Usage-based"],
                 "description": "Usage-based maintenance trigger."
               },
-              "counters": {
-                "type": "array",
-                "description": "List of counters for usage-based maintenance.",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "subscription": {
-                      "$ref": "#/$defs/subscription"
-                    },
-                    "valueFragment": {
-                      "type": "string",
-                      "description": "Fragment or field to extract the value from."
-                    },
-                    "cycle": {
-                      "type": "integer",
-                      "description": "Cycle duration for the counter.",
-                      "nullable": true
-                    },
-                    "threshold": {
-                      "type": "integer",
-                      "description": "Threshold value for the counter.",
-                      "nullable": true
-                    }
+              "counter": {
+                "type": "object",
+                "description": "Single counter for usage-based maintenance. Defines the criteria for a usage-based trigger.",
+                "properties": {
+                  "subscription": {
+                    "$ref": "#/$defs/subscription"
                   },
-                  "required": ["valueFragment"],
-                  "oneOf": [
-                    { "required": ["cycle"], "not": { "required": ["threshold"] } },
-                    { "required": ["threshold"], "not": { "required": ["cycle"] } }
-                  ],
-                  "additionalProperties": false
-                }
+                  "valueFragment": {
+                    "type": "string",
+                    "description": "Fragment or field to extract the value from. The valueFragment is a JSONPath expression (e.g., $.property.subproperty[0].value, $.items[*]) that specifies the path to the value within the data structure. The pattern provides basic validation for common JSONPath expressions (dot notation, bracket notation with indices or quoted keys, simple wildcards like [*] or .* at the end); full validation for all JSONPath features occurs at runtime."
+                  },
+                  "cycle": {
+                    "type": "integer",
+                    "description": "Cycle duration for the counter.",
+                    "nullable": true
+                  },
+                  "threshold": {
+                    "type": "integer",
+                    "description": "Threshold value for the counter.",
+                    "nullable": true
+                  }
+                },
+                "required": ["valueFragment"],
+                "oneOf": [
+                  { "required": ["cycle"], "not": { "required": ["threshold"] } },
+                  { "required": ["threshold"], "not": { "required": ["cycle"] } }
+                ],
+                "additionalProperties": false
               }
             },
-            "required": ["type", "counters"],
+            "required": ["type", "counter"],
             "additionalProperties": false
           },
           {
@@ -145,7 +145,7 @@
               },
               "conditions": {
                 "type": "array",
-                "description": "List of conditions for condition-based maintenance.",
+                "description": "List of conditions for condition-based maintenance. The maintenance plan is activated if ALL of these conditions are met (AND connection).",
                 "items": {
                   "type": "object",
                   "properties": {
@@ -154,7 +154,7 @@
                     },
                     "valueFragment": {
                       "type": "string",
-                      "description": "Fragment or field to extract the value from."
+                      "description": "Fragment or field to extract the value from. The valueFragment is a JSONPath expression that specifies the path to the value within the data structure."
                     },
                     "operator": {
                       "type": "string",

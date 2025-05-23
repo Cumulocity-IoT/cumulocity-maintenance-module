@@ -8,8 +8,7 @@
   "on": [
     {
       "type": "Usage-based",
-      "counters": [
-        {
+      "counter": {
           "subscription": {
             "api": "measurements",
             "typeFilter": "operatingHours"
@@ -17,7 +16,6 @@
           "valueFragment": "operatingHours.t",
           "threshold": 1999
         }
-      ]
     }
   ]
 }

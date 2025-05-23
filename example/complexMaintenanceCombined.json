@@ -8,16 +8,7 @@
   "on": [
     {
       "type": "Usage-based",
-      "counters": [
-        {
-          "subscription": {
-            "api": "measurements",
-            "typeFilter": "operatingHours"
-          },
-          "valueFragment": "value",
-          "threshold": 30000
-        },
-        {
+      "counter": {
           "subscription": {
             "api": "alarms",
             "typeFilter": "restartAlarm"
@@ -25,7 +16,6 @@
           "valueFragment": "count", 
           "threshold": 200
         }
-      ]
     }
   ]
 }
