@@ -104,7 +104,7 @@
               },
               "counter": {
                 "type": "object",
-                "description": "Single counter for usage-based maintenance. Defines the criteria for a usage-based trigger.",
+                "description": "Single counter for usage-based maintenance. Defines the criteria for a usage-based trigger. Examples are operating hours, cycle count, distance and alarm counts.",
                 "properties": {
                   "subscription": {
                     "$ref": "#/$defs/subscription"
@@ -113,23 +113,41 @@
                     "type": "string",
                     "description": "Fragment or field to extract the value from. The valueFragment is a JSONPath expression (e.g., $.property.subproperty[0].value, $.items[*]) that specifies the path to the value within the data structure. The pattern provides basic validation for common JSONPath expressions (dot notation, bracket notation with indices or quoted keys, simple wildcards like [*] or .* at the end); full validation for all JSONPath features occurs at runtime."
                   },
-                  "cycle": {
+                  "cycleValue": {
                     "type": "integer",
-                    "description": "Cycle duration for the counter.",
+                    "description": "Recurring value counter. This option should be used when the counter is continuesly incremented (e.g., operating hours, cycle count).",
                     "nullable": true
                   },
-                  "threshold": {
+                  "thresholdValue": {
                     "type": "integer",
-                    "description": "Threshold value for the counter.",
+                    "description": "Threshold (limit) value for the counter. This option should be used when the counter is reset after reaching the threshold.",
                     "nullable": true
                   }
                 },
                 "required": ["valueFragment"],
                 "oneOf": [
-                  { "required": ["cycle"], "not": { "required": ["threshold"] } },
-                  { "required": ["threshold"], "not": { "required": ["cycle"] } }
+                  { "required": ["cycleValue"], "not": { "required": ["thresholdValue"] } },
+                  { "required": ["thresholdValue"], "not": { "required": ["cycleValue"] } }
                 ],
-                "additionalProperties": false
+                "additionalProperties": false,
+                "examples": [
+                  {
+                    "subscription": {
+                      "api": "measurements",
+                      "typeFilter": "operatingHours"
+                    },
+                    "valueFragment": "operatingHours.t",
+                    "cycleValue": 1000
+                  },
+                  {
+                    "subscription": {
+                      "api": "alarms",
+                      "typeFilter": "restartAlarm"
+                    },
+                    "valueFragment": "$.count",
+                    "thresholdValue": 200
+                  }
+                ]
               }
             },
             "required": ["type", "counter"],
@@ -154,7 +172,7 @@
                     },
                     "valueFragment": {
                       "type": "string",
-                      "description": "Fragment or field to extract the value from. The valueFragment is a JSONPath expression that specifies the path to the value within the data structure."
+                      "description": "Fragment or field to extract the value from. The valueFragment is a JSONPath expression (e.g., $.property.subproperty[0].value, $.items[*]) that specifies the path to the value within the data structure. The pattern provides basic validation for common JSONPath expressions (dot notation, bracket notation with indices or quoted keys, simple wildcards like [*] or .* at the end); full validation for all JSONPath features occurs at runtime."
                     },
                     "operator": {
                       "type": "string",
@@ -167,7 +185,27 @@
                     }
                   },
                   "required": ["valueFragment", "operator", "value"],
-                  "additionalProperties": false
+                  "additionalProperties": false,
+                  "examples": [
+                    {
+                      "subscription": {
+                        "api": "measurements",
+                        "typeFilter": "c8y_Temperature"
+                      },
+                      "valueFragment": "c8y_Temperature.t",
+                      "operator": "gt",
+                      "value": "199"
+                    },
+                    {
+                      "subscription": {
+                        "api": "alarms",
+                        "typeFilter": "restartAlarm"
+                      },
+                      "valueFragment": "$.status",
+                      "operator": "eq",
+                      "value": "ACTIVE"
+                    }
+                  ]
                 }
               }
             },

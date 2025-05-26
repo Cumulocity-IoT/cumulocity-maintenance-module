@@ -14,7 +14,7 @@
             "typeFilter": "restartAlarm"
           },
           "valueFragment": "count", 
-          "threshold": 200
+          "thresholdValue": 200
         }
     }
   ]

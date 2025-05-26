@@ -14,7 +14,7 @@
             "typeFilter": "operatingHours"
           },
           "valueFragment": "operatingHours.t",
-          "threshold": 1999
+          "thresholdValue": 1999
         }
     }
   ]
