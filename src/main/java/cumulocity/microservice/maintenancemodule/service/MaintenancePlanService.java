@@ -6,9 +6,13 @@ import java.util.Map;
 
 import org.springframework.stereotype.Service;
 
+import com.cumulocity.rest.representation.inventory.ManagedObjectRepresentation;
+import com.cumulocity.sdk.client.inventory.InventoryApi;
+
 import cumulocity.microservice.maintenancemodule.model.MaintenancePlan;
 import cumulocity.microservice.maintenancemodule.model.MaintenancePlanCreate;
 import cumulocity.microservice.maintenancemodule.model.MaintenancePlanListResponse;
+import cumulocity.microservice.maintenancemodule.service.c8y.MaintenancePlanMapper;
 
 /**
  * Service for managing maintenance plans with CRUD operations.
@@ -18,6 +22,12 @@ import cumulocity.microservice.maintenancemodule.model.MaintenancePlanListRespon
  */
 @Service
 public class MaintenancePlanService {
+
+    private final InventoryApi inventoryApi;
+
+    public MaintenancePlanService(InventoryApi inventoryApi) {
+        this.inventoryApi = inventoryApi;
+    }
 
     /**
      * Get all maintenance plans with optional filtering and pagination
@@ -48,14 +58,49 @@ public class MaintenancePlanService {
      * @return The created maintenance plan with generated ID
      */
     public MaintenancePlan createMaintenancePlan(MaintenancePlanCreate maintenancePlanCreate) {
-        // TODO: Implement business logic for creating a new maintenance plan
-        // This will include:
-        // - Validation of input data
-        // - ID generation
-        // - Storage/persistence
-        // - Trigger validation and setup
+        // Validate input data
+        if (maintenancePlanCreate == null) {
+            throw new IllegalArgumentException("MaintenancePlanCreate cannot be null");
+        }
+        validateMaintenancePlanCreate(maintenancePlanCreate);
         
-        throw new UnsupportedOperationException("Method not yet implemented");
+        // Create mapper and convert to ManagedObjectRepresentation
+        MaintenancePlanMapper mapper = MaintenancePlanMapper.map2(maintenancePlanCreate);
+        ManagedObjectRepresentation managedObject = mapper.getManagedObject();
+        
+        try {
+            // Store in Cumulocity inventory
+            ManagedObjectRepresentation createdObject = inventoryApi.create(managedObject);
+            
+            // Convert back to MaintenancePlan using mapper
+            return MaintenancePlanMapper.map2(createdObject);
+            
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to create maintenance plan in Cumulocity: " + e.getMessage(), e);
+        }
+    }
+    
+    /**
+     * Validate maintenance plan create data
+     * 
+     * @param maintenancePlanCreate The maintenance plan to validate
+     * @throws IllegalArgumentException if validation fails
+     */
+    private void validateMaintenancePlanCreate(MaintenancePlanCreate maintenancePlanCreate) {
+        if (maintenancePlanCreate.getName() == null || maintenancePlanCreate.getName().trim().isEmpty()) {
+            throw new IllegalArgumentException("Maintenance plan name is required");
+        }
+        
+        if (maintenancePlanCreate.getStartDate() != null && maintenancePlanCreate.getEndDate() != null) {
+            if (maintenancePlanCreate.getStartDate().isAfter(maintenancePlanCreate.getEndDate())) {
+                throw new IllegalArgumentException("Start date must be before end date");
+            }
+        }
+        
+        // Additional validation for triggers if needed
+        if (maintenancePlanCreate.getOn() != null && !maintenancePlanCreate.getOn().isEmpty()) {
+            // TODO: Validate trigger configuration
+        }
     }
 
     /**
