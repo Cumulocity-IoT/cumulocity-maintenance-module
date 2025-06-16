@@ -48,8 +48,8 @@ public class MaintenancePlanController {
      * @param active Filter by active status (optional)
      * @param startDate Filter plans starting after this date (optional)
      * @param endDate Filter plans ending before this date (optional)
-     * @param limit Maximum number of items to return (default: 20, max: 100)
-     * @param offset Number of items to skip (default: 0)
+     * @param pageSize Maximum number of items to return (default: 20, max: 100)
+     * @param pageNumber Number of items to skip (default: 0)
      * @return List of maintenance plans with pagination information
      */
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
@@ -57,21 +57,21 @@ public class MaintenancePlanController {
             @RequestParam(required = false) Boolean active,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
-            @RequestParam(defaultValue = "20") Integer limit,
-            @RequestParam(defaultValue = "0") Integer offset) {
+            @RequestParam(defaultValue = "20") Integer pageSize,
+            @RequestParam(defaultValue = "0") Integer pageNumber) {
         
         // Validate limit parameter
-        if (limit < 1 || limit > 100) {
-            limit = 20; // Reset to default if invalid
+        if (pageSize < 1 || pageSize > 100) {
+            pageSize = 20; // Reset to default if invalid
         }
         
         // Validate offset parameter
-        if (offset < 0) {
-            offset = 0; // Reset to default if invalid
+        if (pageNumber < 0) {
+            pageNumber = 0; // Reset to default if invalid
         }
 
         MaintenancePlanListResponse response = maintenancePlanService.getAllMaintenancePlans(
-                active, startDate, endDate, limit, offset);
+                active, startDate, endDate, pageSize, pageNumber, false);
         
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
@@ -118,23 +118,6 @@ public class MaintenancePlanController {
             @RequestBody MaintenancePlan maintenancePlan) {
         
         MaintenancePlan updatedPlan = maintenancePlanService.updateMaintenancePlan(id, maintenancePlan);
-        
-        return new ResponseEntity<>(updatedPlan, HttpStatus.OK);
-    }
-
-    /**
-     * Partially update an existing maintenance plan
-     * 
-     * @param id The unique identifier of the maintenance plan
-     * @param updates Map of field updates to apply
-     * @return The updated maintenance plan
-     */
-    @PatchMapping(path = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<MaintenancePlan> patchMaintenancePlan(
-            @PathVariable Integer id,
-            @RequestBody Map<String, Object> updates) {
-        
-        MaintenancePlan updatedPlan = maintenancePlanService.patchMaintenancePlan(id, updates);
         
         return new ResponseEntity<>(updatedPlan, HttpStatus.OK);
     }

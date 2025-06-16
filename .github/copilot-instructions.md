@@ -62,3 +62,7 @@ public class MaintenanceManager {
 - Implement proper error handling with appropriate exceptions
 - Include unit tests for public methods when generating test classes
 - Use Slf4j for logging in each class
+
+## Special Cumulocity Microservice Requirements
+- REST PATCH is not allowed in Cumulocity microservices
+- The microservice name must follow the this regex: `^[a-z0-9-]{1,23}$`

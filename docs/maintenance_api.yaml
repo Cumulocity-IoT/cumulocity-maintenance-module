@@ -67,12 +67,27 @@ paths:
               schema:
                 type: object
                 properties:
-                  data:
+                  maintenancePlans:
                     type: array
                     items:
                       $ref: '#/components/schemas/MaintenancePlan'
-                  pagination:
-                    $ref: '#/components/schemas/Pagination'
+                  currentPage:
+                    type: integer
+                    description: Current page number (0-based)
+                    example: 0
+                  pageSize:
+                    type: integer
+                    description: Number of items per page
+                    example: 20
+                  totalPages:
+                    type: integer
+                    description: Total number of pages
+                    example: 8
+                  totalElements:
+                    type: integer
+                    format: int64
+                    description: Total number of elements across all pages
+                    example: 150
         '400':
           $ref: '#/components/responses/BadRequest'
         '500':
@@ -143,39 +158,6 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/MaintenancePlanUpdate'
-      responses:
-        '200':
-          description: Maintenance plan updated successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MaintenancePlan'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '422':
-          $ref: '#/components/responses/ValidationError'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-
-    patch:
-      summary: Partially update a maintenance plan
-      description: Update specific fields of an existing maintenance plan
-      operationId: patchMaintenancePlan
-      parameters:
-        - name: id
-          in: path
-          required: true
-          description: Unique identifier of the maintenance plan
-          schema:
-            type: integer
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/MaintenancePlanPatch'
       responses:
         '200':
           description: Maintenance plan updated successfully
@@ -331,33 +313,6 @@ components:
         - active
         - on
 
-    MaintenancePlanPatch:
-      type: object
-      description: Schema for partial updates to a maintenance plan (all fields optional)
-      properties:
-        name:
-          type: string
-          description: Name of the maintenance entry
-        description:
-          type: string
-          description: Detailed description of the maintenance entry
-        startDate:
-          type: string
-          format: date-time
-          description: Start date and time for the maintenance
-        endDate:
-          type: string
-          format: date-time
-          description: End date and time for the maintenance
-        active:
-          type: boolean
-          description: Indicates whether the maintenance entry is active
-        on:
-          type: array
-          description: List of maintenance triggers
-          items:
-            $ref: '#/components/schemas/MaintenanceTrigger'
-
     MaintenanceTrigger:
       oneOf:
         - $ref: '#/components/schemas/TimeBasedTrigger'
@@ -501,31 +456,6 @@ components:
         - api
         - typeFilter
       additionalProperties: false
-
-    Pagination:
-      type: object
-      description: Pagination information for list responses
-      properties:
-        total:
-          type: integer
-          description: Total number of items
-          example: 150
-        limit:
-          type: integer
-          description: Number of items per page
-          example: 20
-        offset:
-          type: integer
-          description: Number of items skipped
-          example: 0
-        hasNext:
-          type: boolean
-          description: Whether there are more items available
-          example: true
-        hasPrevious:
-          type: boolean
-          description: Whether there are previous items available
-          example: false
 
     Error:
       type: object

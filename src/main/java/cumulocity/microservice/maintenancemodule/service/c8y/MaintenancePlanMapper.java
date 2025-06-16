@@ -11,6 +11,13 @@ import cumulocity.microservice.maintenancemodule.model.MaintenancePlan;
 import cumulocity.microservice.maintenancemodule.model.MaintenancePlanCreate;
 import cumulocity.microservice.maintenancemodule.model.MaintenanceTrigger;
 
+/**
+ * Mapper class for converting between MaintenancePlan domain objects and Cumulocity ManagedObjectRepresentation.
+ * Provides functionality to map maintenance plan data to and from Cumulocity IoT Platform format.
+ * 
+ * @author APES
+ * @since 1.0.0
+ */
 public class MaintenancePlanMapper {
     public static final String MANAGED_OBJECT_TYPE = "c8y_MaintenancePlan";
     
@@ -23,6 +30,13 @@ public class MaintenancePlanMapper {
     
     private final ManagedObjectRepresentation managedObject;
     
+    /**
+     * Creates a MaintenancePlanMapper from a MaintenancePlanCreate object.
+     * 
+     * @param maintenancePlanCreate the maintenance plan creation data to map
+     * @return the mapped MaintenancePlanMapper instance, or null if input is null
+     * @since 1.0.0
+     */
     public static MaintenancePlanMapper map2(MaintenancePlanCreate maintenancePlanCreate) {
         if (maintenancePlanCreate == null) {
             return null;
@@ -38,12 +52,20 @@ public class MaintenancePlanMapper {
         return mapper;
     }
     
-    public static MaintenancePlanMapper map2(String id, MaintenancePlan maintenancePlan) {
+    /**
+     * Creates a MaintenancePlanMapper from a MaintenancePlan object.
+     * 
+     * @param maintenancePlan the maintenance plan to map
+     * @return the mapped MaintenancePlanMapper instance, or null if input is null
+     * @since 1.0.0
+     */
+    public static MaintenancePlanMapper map2(MaintenancePlan maintenancePlan) {
         if (maintenancePlan == null) {
             return null;
         }
         
-        MaintenancePlanMapper mapper = new MaintenancePlanMapper(id);
+        MaintenancePlanMapper mapper = new MaintenancePlanMapper();
+        mapper.setId(maintenancePlan.getId());
         mapper.setName(maintenancePlan.getName());
         mapper.setDescription(maintenancePlan.getDescription());
         mapper.setStartDate(maintenancePlan.getStartDate());
@@ -86,6 +108,13 @@ public class MaintenancePlanMapper {
         this.managedObject.setType(MANAGED_OBJECT_TYPE);
     }
     
+    public void setId(Integer id) {
+        if (id == null) {
+            return;
+        }
+        managedObject.setId(GId.asGId(id));
+    }
+
     public Integer getId() {
         if (managedObject.getId() != null) {
             return Integer.valueOf(managedObject.getId().getValue());

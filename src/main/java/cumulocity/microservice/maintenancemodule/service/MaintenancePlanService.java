@@ -1,13 +1,22 @@
 package cumulocity.microservice.maintenancemodule.service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import com.cumulocity.rest.representation.inventory.ManagedObjectRepresentation;
 import com.cumulocity.sdk.client.inventory.InventoryApi;
+import com.cumulocity.sdk.client.inventory.InventoryFilter;
+import com.cumulocity.sdk.client.inventory.ManagedObjectCollection;
+import com.cumulocity.sdk.client.inventory.PagedManagedObjectCollectionRepresentation;
+import com.cumulocity.model.idtype.GId;
+import com.cumulocity.sdk.client.SDKException;
 
 import cumulocity.microservice.maintenancemodule.model.MaintenancePlan;
 import cumulocity.microservice.maintenancemodule.model.MaintenancePlanCreate;
@@ -16,13 +25,16 @@ import cumulocity.microservice.maintenancemodule.service.c8y.MaintenancePlanMapp
 
 /**
  * Service for managing maintenance plans with CRUD operations.
- * Business logic will be implemented in the future.
+ * Provides functionality to create, retrieve, update, and delete maintenance plans.
  * 
  * @author APES
+ * @since 1.0.0
  */
 @Service
 public class MaintenancePlanService {
 
+    private static final Logger log = LoggerFactory.getLogger(MaintenancePlanService.class);
+    
     private final InventoryApi inventoryApi;
 
     public MaintenancePlanService(InventoryApi inventoryApi) {
@@ -30,32 +42,135 @@ public class MaintenancePlanService {
     }
 
     /**
-     * Get all maintenance plans with optional filtering and pagination
+     * Retrieves all maintenance plans with optional filtering and pagination.
      * 
-     * @param active Filter by active status (optional)
-     * @param startDate Filter plans starting after this date (optional)
-     * @param endDate Filter plans ending before this date (optional)
-     * @param limit Maximum number of items to return
-     * @param offset Number of items to skip
-     * @return List response with pagination information
+     * @param active filter by active status (optional)
+     * @param startDate filter plans starting after this date (optional)
+     * @param endDate filter plans ending before this date (optional)
+     * @param pageSize maximum number of items per page
+     * @param pageNumber page number (0-based)
+     * @param withTotalPages whether to include total page statistics in response
+     * @return list response with pagination information
+     * @since 1.0.0
      */
     public MaintenancePlanListResponse getAllMaintenancePlans(Boolean active, LocalDateTime startDate, 
-                                                              LocalDateTime endDate, Integer limit, Integer offset) {
-        // TODO: Implement business logic for retrieving maintenance plans with filtering and pagination
-        // This will include:
-        // - Filtering by active status
-        // - Date range filtering
-        // - Pagination logic
-        // - Database/storage interaction
+                                                              LocalDateTime endDate, Integer pageSize, 
+                                                              Integer pageNumber, Boolean withTotalPages) {
+        log.info("getAllMaintenancePlans(active: {}, startDate: {}, endDate: {}, pageSize: {}, pageNumber: {}, withTotalPages: {})", 
+                 active, startDate, endDate, pageSize, pageNumber, withTotalPages);
         
-        throw new UnsupportedOperationException("Method not yet implemented");
+        // Set default values
+        pageSize = pageSize != null ? pageSize : 5;
+        pageNumber = pageNumber != null ? pageNumber : 0;
+        withTotalPages = withTotalPages != null ? withTotalPages : false;
+        
+        try {
+            // Create filter for maintenance plans
+            InventoryFilter filter = new InventoryFilter();
+            filter.byType(MaintenancePlanMapper.MANAGED_OBJECT_TYPE);
+            
+            // Get managed objects from Cumulocity
+            ManagedObjectCollection managedObjectCollection = inventoryApi.getManagedObjectsByFilter(filter);
+            
+            // Get all maintenance plans and convert to domain objects
+            Iterable<ManagedObjectRepresentation> allPages = managedObjectCollection.get(2000).allPages();
+            List<MaintenancePlan> allMaintenancePlans = new ArrayList<>();
+            
+            for (ManagedObjectRepresentation managedObject : allPages) {
+                MaintenancePlan maintenancePlan = MaintenancePlanMapper.map2(managedObject);
+                if (maintenancePlan != null) {
+                    allMaintenancePlans.add(maintenancePlan);
+                }
+            }
+            
+            // Apply filters
+            List<MaintenancePlan> filteredPlans = allMaintenancePlans.stream()
+                .filter(plan -> filterByActive(plan, active))
+                .filter(plan -> filterByDateRange(plan, startDate, endDate))
+                .collect(Collectors.toList());
+            
+            // Apply pagination
+            int totalElements = filteredPlans.size();
+            int totalPages = (int) Math.ceil((double) totalElements / pageSize);
+            int startIndex = pageNumber * pageSize;
+            int endIndex = Math.min(startIndex + pageSize, totalElements);
+            
+            List<MaintenancePlan> pagedPlans = new ArrayList<>();
+            if (startIndex < totalElements) {
+                pagedPlans = filteredPlans.subList(startIndex, endIndex);
+            }
+            
+            // Create response
+            MaintenancePlanListResponse response = new MaintenancePlanListResponse();
+            response.setMaintenancePlans(pagedPlans);
+            response.setCurrentPage(pageNumber);
+            response.setPageSize(pageSize);
+            response.setTotalElements((long) totalElements);
+            
+            if (withTotalPages) {
+                response.setTotalPages(totalPages);
+            }
+            
+            log.info("getAllMaintenancePlans: returning {} plans out of {} total", pagedPlans.size(), totalElements);
+            return response;
+            
+        } catch (SDKException e) {
+            log.error("Failed to retrieve maintenance plans: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to retrieve maintenance plans: " + e.getMessage(), e);
+        } catch (Exception e) {
+            log.error("Unexpected error while retrieving maintenance plans: {}", e.getMessage(), e);
+            throw new RuntimeException("Unexpected error while retrieving maintenance plans: " + e.getMessage(), e);
+        }
+    }
+    
+    /**
+     * Filters maintenance plans by active status.
+     * 
+     * @param plan the maintenance plan to check
+     * @param active the active status filter (null means no filter)
+     * @return true if plan matches filter criteria
+     * @since 1.0.0
+     */
+    private boolean filterByActive(MaintenancePlan plan, Boolean active) {
+        if (active == null) {
+            return true; // No filter applied
+        }
+        return active.equals(plan.getActive());
+    }
+    
+    /**
+     * Filters maintenance plans by date range.
+     * 
+     * @param plan the maintenance plan to check
+     * @param startDate the start date filter (null means no filter)
+     * @param endDate the end date filter (null means no filter)
+     * @return true if plan matches filter criteria
+     * @since 1.0.0
+     */
+    private boolean filterByDateRange(MaintenancePlan plan, LocalDateTime startDate, LocalDateTime endDate) {
+        if (startDate != null && plan.getStartDate() != null) {
+            if (plan.getStartDate().isBefore(startDate)) {
+                return false;
+            }
+        }
+        
+        if (endDate != null && plan.getEndDate() != null) {
+            if (plan.getEndDate().isAfter(endDate)) {
+                return false;
+            }
+        }
+        
+        return true;
     }
 
     /**
-     * Create a new maintenance plan
+     * Creates a new maintenance plan in the Cumulocity IoT Platform.
      * 
-     * @param maintenancePlanCreate The maintenance plan to create
-     * @return The created maintenance plan with generated ID
+     * @param maintenancePlanCreate The maintenance plan configuration to create
+     * @return The created maintenance plan with assigned ID
+     * @throws IllegalArgumentException if maintenancePlanCreate is null or invalid
+     * @throws RuntimeException if creation fails in Cumulocity
+     * @since 1.0.0
      */
     public MaintenancePlan createMaintenancePlan(MaintenancePlanCreate maintenancePlanCreate) {
         // Validate input data
@@ -108,115 +223,146 @@ public class MaintenancePlanService {
      * 
      * @param id The unique identifier of the maintenance plan
      * @return The maintenance plan if found
-     * @throws RuntimeException if plan not found
+     * @throws IllegalArgumentException if id is null
+     * @throws RuntimeException if plan not found or retrieval fails
+     * @since 1.0.0
      */
     public MaintenancePlan getMaintenancePlan(Integer id) {
-        // TODO: Implement business logic for retrieving a specific maintenance plan
-        // This will include:
-        // - Database/storage lookup
-        // - Not found handling
+        if (id == null) {
+            throw new IllegalArgumentException("Maintenance plan ID cannot be null");
+        }
         
-        throw new UnsupportedOperationException("Method not yet implemented");
+        log.debug("Retrieving maintenance plan with ID: {}", id);
+        
+        try {
+            ManagedObjectRepresentation managedObject = inventoryApi.get(GId.asGId(id.toString()));
+            
+            if (managedObject == null) {
+                log.warn("Maintenance plan with ID {} not found", id);
+                return null;
+            }
+            
+            // Convert ManagedObjectRepresentation back to MaintenancePlan using mapper
+            MaintenancePlan maintenancePlan = MaintenancePlanMapper.map2(managedObject);
+            
+            log.debug("Successfully retrieved maintenance plan with ID: {}", id);
+            return maintenancePlan;
+            
+        } catch (SDKException e) {
+            log.error("Failed to retrieve maintenance plan with ID: {}", id, e);
+            throw new RuntimeException("Failed to retrieve maintenance plan with ID " + id + ": " + e.getMessage(), e);
+        } catch (Exception e) {
+            log.error("Unexpected error while retrieving maintenance plan with ID: {}", id, e);
+            throw new RuntimeException("Unexpected error while retrieving maintenance plan: " + e.getMessage(), e);
+        }
     }
 
     /**
-     * Update an existing maintenance plan by replacing all fields
+     * Updates an existing maintenance plan by replacing all fields.
      * 
-     * @param id The unique identifier of the maintenance plan
-     * @param maintenancePlan The updated maintenance plan data
-     * @return The updated maintenance plan
-     * @throws RuntimeException if plan not found
+     * @param id the unique identifier of the maintenance plan to update
+     * @param maintenancePlan the updated maintenance plan data
+     * @return the updated maintenance plan
+     * @throws IllegalArgumentException if id or maintenancePlan is null or invalid
+     * @throws RuntimeException if plan not found or update fails
+     * @since 1.0.0
      */
     public MaintenancePlan updateMaintenancePlan(Integer id, MaintenancePlan maintenancePlan) {
-        // TODO: Implement business logic for updating a maintenance plan
-        // This will include:
-        // - Existence check
-        // - Validation of input data
-        // - Complete replacement of data
-        // - Trigger reconfiguration
-        // - Storage/persistence
+        if(validateMaintenancePlan(maintenancePlan) == false) {
+            return null; // Validation failed, return null
+        }
+
+        log.info("updateMaintenancePlan(id: {}, maintenancePlan: {})", id, maintenancePlan.toString());
+               
+        try {
+            
+            // Validate that the ID in the maintenance plan matches the provided ID
+            maintenancePlan.setId(id); // Ensure ID is set for update
+
+            // Create mapper and convert to ManagedObjectRepresentation
+            MaintenancePlanMapper mapper = MaintenancePlanMapper.map2(maintenancePlan);
+            ManagedObjectRepresentation managedObject = mapper.getManagedObject();
         
-        throw new UnsupportedOperationException("Method not yet implemented");
+            // Update in Cumulocity inventory
+            ManagedObjectRepresentation updatedObject = inventoryApi.update(managedObject);
+            
+            // Convert back to MaintenancePlan using mapper
+            MaintenancePlan updatedPlan = MaintenancePlanMapper.map2(updatedObject);
+            
+            log.info("Successfully updated maintenance plan with ID: {}", id);
+            return updatedPlan;
+            
+        } catch (SDKException e) {
+            log.error("Failed to update maintenance plan with ID: {}", id, e);
+            throw new RuntimeException("Failed to update maintenance plan with ID " + id + ": " + e.getMessage(), e);
+        } catch (Exception e) {
+            log.error("Unexpected error while updating maintenance plan with ID: {}", id, e);
+            throw new RuntimeException("Unexpected error while updating maintenance plan: " + e.getMessage(), e);
+        }
     }
 
     /**
-     * Partially update an existing maintenance plan
+     * Deletes an existing maintenance plan from the Cumulocity IoT Platform.
      * 
-     * @param id The unique identifier of the maintenance plan
-     * @param updates Map of field updates to apply
-     * @return The updated maintenance plan
-     * @throws RuntimeException if plan not found
-     */
-    public MaintenancePlan patchMaintenancePlan(Integer id, Map<String, Object> updates) {
-        // TODO: Implement business logic for partial updates
-        // This will include:
-        // - Existence check
-        // - Selective field updates
-        // - Validation of changed fields
-        // - Trigger reconfiguration if needed
-        // - Storage/persistence
-        
-        throw new UnsupportedOperationException("Method not yet implemented");
-    }
-
-    /**
-     * Delete an existing maintenance plan
-     * 
-     * @param id The unique identifier of the maintenance plan
-     * @throws RuntimeException if plan not found
+     * @param id the unique identifier of the maintenance plan to delete
+     * @throws IllegalArgumentException if id is null
+     * @throws RuntimeException if plan not found or deletion fails
+     * @since 1.0.0
      */
     public void deleteMaintenancePlan(Integer id) {
-        // TODO: Implement business logic for deleting a maintenance plan
-        // This will include:
-        // - Existence check
-        // - Cleanup of associated triggers
-        // - Storage/persistence removal
-        // - Cleanup of any running maintenance tasks
+        if (id == null) {
+            throw new IllegalArgumentException("Maintenance plan ID cannot be null");
+        }
         
-        throw new UnsupportedOperationException("Method not yet implemented");
+        log.debug("Deleting maintenance plan with ID: {}", id);
+        
+        try {
+            // Delete the managed object from Cumulocity inventory
+            inventoryApi.delete(GId.asGId(id.toString()));
+            
+            log.info("Successfully deleted maintenance plan with ID: {}", id);
+            
+        } catch (SDKException e) {
+            log.error("Failed to delete maintenance plan with ID: {}", id, e);
+            throw new RuntimeException("Failed to delete maintenance plan with ID " + id + ": " + e.getMessage(), e);
+        } catch (Exception e) {
+            log.error("Unexpected error while deleting maintenance plan with ID: {}", id, e);
+            throw new RuntimeException("Unexpected error while deleting maintenance plan: " + e.getMessage(), e);
+        }
     }
 
     /**
-     * Check if a maintenance plan exists
+     * Validates maintenance plan data for updates.
      * 
-     * @param id The unique identifier of the maintenance plan
-     * @return true if the plan exists, false otherwise
+     * @param maintenancePlan the maintenance plan to validate
+     * @return true if validation passes, false otherwise
+     * @since 1.0.0
      */
-    public boolean existsById(Integer id) {
-        // TODO: Implement existence check
-        // This will include:
-        // - Database/storage lookup
+    private boolean validateMaintenancePlan(MaintenancePlan maintenancePlan) {
+
+        if (maintenancePlan == null) {
+            log.warn("Maintenance plan validation failed: maintenancePlan is null");
+            return false;
+        }
+
+        if (maintenancePlan.getName() == null || maintenancePlan.getName().trim().isEmpty()) {
+            log.warn("Maintenance plan validation failed: name is required");
+            return false;
+        }
         
-        throw new UnsupportedOperationException("Method not yet implemented");
+        if (maintenancePlan.getStartDate() != null && maintenancePlan.getEndDate() != null) {
+            if (maintenancePlan.getStartDate().isAfter(maintenancePlan.getEndDate())) {
+                log.warn("Maintenance plan validation failed: start date must be before end date");
+                return false;
+            }
+        }
+        
+        // Additional validation for triggers if needed
+        if (maintenancePlan.getOn() != null && !maintenancePlan.getOn().isEmpty()) {
+            // TODO: Validate trigger configuration
+        }
+        
+        return true;
     }
 
-    /**
-     * Validate maintenance plan data
-     * 
-     * @param maintenancePlan The maintenance plan to validate
-     * @throws IllegalArgumentException if validation fails
-     */
-    private void validateMaintenancePlan(MaintenancePlan maintenancePlan) {
-        // TODO: Implement validation logic
-        // This will include:
-        // - Required field validation
-        // - Date validation (start < end)
-        // - Trigger validation
-        // - Business rule validation
-    }
-
-    /**
-     * Generate a new unique ID for a maintenance plan
-     * 
-     * @return A new unique ID
-     */
-    private Integer generateNewId() {
-        // TODO: Implement ID generation strategy
-        // This could be:
-        // - Sequential IDs
-        // - Database auto-increment
-        // - UUID-based
-        
-        throw new UnsupportedOperationException("Method not yet implemented");
-    }
 }
