@@ -25,7 +25,7 @@ jobs:
         cache: maven # This handles caching of .m2/repository
 
     - name: Build and Test with Maven
-      run: mvn -B clean verify
+      run: mvn -B -f path/to/your/pom.xml clean verify
 
     - name: Upload Test Results Artifact
       if: always() # Run this even if the previous step failed
