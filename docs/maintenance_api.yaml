@@ -212,6 +212,9 @@ components:
           type: string
           description: Detailed description of the maintenance entry
           example: "Perform server health checks and updates every quarter"
+        text:
+          type: "string"
+          description: "Maintenance text which can be used to initialize the maintenance instance like alarm text."
         startDate:
           type: string
           format: date-time
@@ -252,6 +255,9 @@ components:
           type: string
           description: Detailed description of the maintenance entry
           example: "Perform server health checks and updates every quarter"
+        text:
+          type: "string"
+          description: "Maintenance text which can be used to initialize the maintenance instance like alarm text."
         startDate:
           type: string
           format: date-time
@@ -289,6 +295,9 @@ components:
         description:
           type: string
           description: Detailed description of the maintenance entry
+        text:
+          type: "string"
+          description: "Maintenance text which can be used to initialize the maintenance instance like alarm text."
         startDate:
           type: string
           format: date-time

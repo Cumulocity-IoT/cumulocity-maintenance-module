@@ -359,7 +359,24 @@ public class MaintenancePlanService {
         
         // Additional validation for triggers if needed
         if (maintenancePlan.getOn() != null && !maintenancePlan.getOn().isEmpty()) {
-            // TODO: Validate trigger configuration
+            // Validate each trigger in the list
+            for (Object trigger : maintenancePlan.getOn()) {
+                if (trigger == null) {
+                    log.warn("Maintenance plan validation failed: trigger is null");
+                    return false;
+                }
+                // Example: Check for required 'type' property using reflection or interface
+                try {
+                    String type = (String) trigger.getClass().getMethod("getType").invoke(trigger);
+                    if (type == null || type.trim().isEmpty()) {
+                        log.warn("Maintenance plan validation failed: trigger type is missing");
+                        return false;
+                    }
+                } catch (Exception e) {
+                    log.warn("Maintenance plan validation failed: unable to access trigger type", e);
+                    return false;
+                }
+            }
         }
         
         return true;

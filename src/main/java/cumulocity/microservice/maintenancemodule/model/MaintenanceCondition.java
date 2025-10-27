@@ -1,66 +1,46 @@
 package cumulocity.microservice.maintenancemodule.model;
 
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
+
+import org.springframework.validation.annotation.Validated;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+
 /**
  * Individual condition for condition-based maintenance triggers
  * 
  * @author APES
  */
+@Data
+@RequiredArgsConstructor
+@NoArgsConstructor
+@Schema(description = "Individual condition for condition-based maintenance triggers")
+@Validated
 public class MaintenanceCondition {
+
+    @Schema(required = true, description = "Subscription details")
+    @NotNull
+    @NonNull
+    @Valid
     private Subscription subscription;
+
+    @Schema(required = true, description = "Value fragment to evaluate", example = "c8y_Temperature.T.value")
+    @NotNull
+    @NonNull
     private String valueFragment;
+
+    @Schema(required = true, description = "Comparison operator", example = "gt", allowableValues = {"eq", "ne", "gt", "lt", "gte", "lte"})
+    @NotNull
+    @NonNull
     private String operator;
+
+    @Schema(required = true, description = "Value to compare against", example = "25.0")
+    @NotNull
+    @NonNull
     private Object value;
-
-    // Default constructor
-    public MaintenanceCondition() {}
-
-    // Constructor
-    public MaintenanceCondition(Subscription subscription, String valueFragment, String operator, Object value) {
-        this.subscription = subscription;
-        this.valueFragment = valueFragment;
-        this.operator = operator;
-        this.value = value;
-    }
-
-    public Subscription getSubscription() {
-        return subscription;
-    }
-
-    public void setSubscription(Subscription subscription) {
-        this.subscription = subscription;
-    }
-
-    public String getValueFragment() {
-        return valueFragment;
-    }
-
-    public void setValueFragment(String valueFragment) {
-        this.valueFragment = valueFragment;
-    }
-
-    public String getOperator() {
-        return operator;
-    }
-
-    public void setOperator(String operator) {
-        this.operator = operator;
-    }
-
-    public Object getValue() {
-        return value;
-    }
-
-    public void setValue(Object value) {
-        this.value = value;
-    }
-
-    @Override
-    public String toString() {
-        return "MaintenanceCondition{" +
-                "subscription=" + subscription +
-                ", valueFragment='" + valueFragment + '\'' +
-                ", operator='" + operator + '\'' +
-                ", value=" + value +
-                '}';
-    }
 }

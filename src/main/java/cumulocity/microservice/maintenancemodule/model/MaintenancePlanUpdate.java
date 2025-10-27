@@ -4,7 +4,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
 
 import org.springframework.validation.annotation.Validated;
 
@@ -13,26 +12,21 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 
 /**
- * Represents a schema for creating a new maintenance plan, excluding the auto-generated ID.
- * Provides functionality to create maintenance schedules for Cumulocity devices.
+ * Represents a schema for updating a maintenance plan, excluding the ID which cannot be modified.
+ * Provides functionality to update existing maintenance schedules for Cumulocity devices.
  * 
  * @author APES
  * @since 1.0.0
  */
 @Data
-@RequiredArgsConstructor
 @NoArgsConstructor
-@Schema(description = "Schema for creating a new maintenance plan, excluding the auto-generated ID")
+@Schema(description = "Schema for updating a maintenance plan, excluding the ID which cannot be modified")
 @Validated
-public class MaintenancePlanCreate {
+public class MaintenancePlanUpdate {
 
-    @Schema(required = true, description = "The name of the maintenance plan", example = "Monthly Equipment Check")
-    @NotNull
-    @NonNull
+    @Schema(description = "The name of the maintenance plan", example = "Monthly Equipment Check")
     private String name;
 
     @Schema(description = "Detailed description of the maintenance plan", example = "Monthly maintenance check for all production equipment")
@@ -41,16 +35,12 @@ public class MaintenancePlanCreate {
     @Schema(description = "Maintenance text which can be used to initialize the maintenance instance")
     private String text;
 
-    @Schema(required = true, description = "Start date and time for the maintenance", example = "2025-01-01T09:00:00Z")
+    @Schema(description = "Start date and time for the maintenance", example = "2025-01-01T09:00:00Z")
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'")
-    @NotNull
-    @NonNull
     private LocalDateTime startDate;
 
     @Schema(description = "End date and time for the maintenance", example = "2025-12-31T17:00:00Z")
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'")
-    @NotNull
-    @NonNull
     private LocalDateTime endDate;
 
     @Schema(description = "Indicates whether the maintenance plan is active", example = "true")

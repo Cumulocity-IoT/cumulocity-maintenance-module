@@ -1,66 +1,42 @@
 package cumulocity.microservice.maintenancemodule.model;
 
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
+
+import org.springframework.validation.annotation.Validated;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+
 /**
  * Single counter for usage-based maintenance defining criteria for triggers
  * 
  * @author APES
  */
+@Data
+@RequiredArgsConstructor
+@NoArgsConstructor
+@Schema(description = "Single counter for usage-based maintenance defining criteria for triggers")
+@Validated
 public class UsageCounter {
+
+    @Schema(required = true, description = "Subscription details")
+    @NotNull
+    @NonNull
+    @Valid
     private Subscription subscription;
+
+    @Schema(required = true, description = "Value fragment to monitor", example = "c8y_Temperature.T.value")
+    @NotNull
+    @NonNull
     private String valueFragment;
+
+    @Schema(description = "Cycle value for counter reset", example = "1000")
     private Integer cycleValue;
+
+    @Schema(description = "Threshold value to trigger maintenance", example = "800")
     private Integer thresholdValue;
-
-    // Default constructor
-    public UsageCounter() {}
-
-    // Constructor
-    public UsageCounter(Subscription subscription, String valueFragment, Integer cycleValue, Integer thresholdValue) {
-        this.subscription = subscription;
-        this.valueFragment = valueFragment;
-        this.cycleValue = cycleValue;
-        this.thresholdValue = thresholdValue;
-    }
-
-    public Subscription getSubscription() {
-        return subscription;
-    }
-
-    public void setSubscription(Subscription subscription) {
-        this.subscription = subscription;
-    }
-
-    public String getValueFragment() {
-        return valueFragment;
-    }
-
-    public void setValueFragment(String valueFragment) {
-        this.valueFragment = valueFragment;
-    }
-
-    public Integer getCycleValue() {
-        return cycleValue;
-    }
-
-    public void setCycleValue(Integer cycleValue) {
-        this.cycleValue = cycleValue;
-    }
-
-    public Integer getThresholdValue() {
-        return thresholdValue;
-    }
-
-    public void setThresholdValue(Integer thresholdValue) {
-        this.thresholdValue = thresholdValue;
-    }
-
-    @Override
-    public String toString() {
-        return "UsageCounter{" +
-                "subscription=" + subscription +
-                ", valueFragment='" + valueFragment + '\'' +
-                ", cycleValue=" + cycleValue +
-                ", thresholdValue=" + thresholdValue +
-                '}';
-    }
 }

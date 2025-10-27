@@ -1,44 +1,32 @@
 package cumulocity.microservice.maintenancemodule.model;
 
+import javax.validation.constraints.NotNull;
+
+import org.springframework.validation.annotation.Validated;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+
 /**
  * Subscription details for Usage-based and Condition-based triggers
  * 
  * @author APES
  */
+@Data
+@RequiredArgsConstructor
+@NoArgsConstructor
+@Schema(description = "Subscription details for Usage-based and Condition-based triggers")
+@Validated
 public class Subscription {
+
+    @Schema(required = true, description = "API endpoint to subscribe to", example = "measurements")
+    @NotNull
+    @NonNull
     private String api;
+
+    @Schema(description = "Type filter for subscription", example = "c8y_Temperature")
     private String typeFilter;
-
-    // Default constructor
-    public Subscription() {}
-
-    // Constructor
-    public Subscription(String api, String typeFilter) {
-        this.api = api;
-        this.typeFilter = typeFilter;
-    }
-
-    public String getApi() {
-        return api;
-    }
-
-    public void setApi(String api) {
-        this.api = api;
-    }
-
-    public String getTypeFilter() {
-        return typeFilter;
-    }
-
-    public void setTypeFilter(String typeFilter) {
-        this.typeFilter = typeFilter;
-    }
-
-    @Override
-    public String toString() {
-        return "Subscription{" +
-                "api='" + api + '\'' +
-                ", typeFilter='" + typeFilter + '\'' +
-                '}';
-    }
 }
