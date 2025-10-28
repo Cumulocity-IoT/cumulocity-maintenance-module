@@ -61,8 +61,8 @@ public class MaintenancePlanController {
             @RequestParam(defaultValue = "0") Integer pageNumber) {
         
         // Validate limit parameter
-        if (pageSize < 1 || pageSize > 100) {
-            pageSize = 20; // Reset to default if invalid
+        if (pageSize < 1) {
+            pageSize = 1; // Reset to default if invalid
         }
         
         // Validate offset parameter
