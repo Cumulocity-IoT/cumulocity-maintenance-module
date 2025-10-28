@@ -25,6 +25,7 @@ public class MaintenancePlanMapper {
     
     public static final String MP_NAME = "mp_Name";
     public static final String MP_DESCRIPTION = "mp_Description";
+    public static final String MP_TEXT = "mp_Text";
     public static final String MP_START_DATE = "mp_StartDate";
     public static final String MP_END_DATE = "mp_EndDate";
     public static final String MP_ACTIVE = "mp_Active";
@@ -47,6 +48,7 @@ public class MaintenancePlanMapper {
         MaintenancePlanMapper mapper = new MaintenancePlanMapper();
         mapper.setName(maintenancePlanCreate.getName());
         mapper.setDescription(maintenancePlanCreate.getDescription());
+        mapper.setText(maintenancePlanCreate.getText());
         mapper.setStartDate(maintenancePlanCreate.getStartDate());
         mapper.setEndDate(maintenancePlanCreate.getEndDate());
         mapper.setActive(maintenancePlanCreate.getActive());
@@ -70,6 +72,7 @@ public class MaintenancePlanMapper {
         mapper.setId(maintenancePlan.getId());
         mapper.setName(maintenancePlan.getName());
         mapper.setDescription(maintenancePlan.getDescription());
+        mapper.setText(maintenancePlan.getText());
         mapper.setStartDate(maintenancePlan.getStartDate());
         mapper.setEndDate(maintenancePlan.getEndDate());
         mapper.setActive(maintenancePlan.getActive());
@@ -87,6 +90,7 @@ public class MaintenancePlanMapper {
         maintenancePlan.setId(mapper.getId());
         maintenancePlan.setName(mapper.getName());
         maintenancePlan.setDescription(mapper.getDescription());
+        maintenancePlan.setText(mapper.getText());
         maintenancePlan.setStartDate(mapper.getStartDate());
         maintenancePlan.setEndDate(mapper.getEndDate());
         maintenancePlan.setActive(mapper.getActive());
@@ -145,6 +149,29 @@ public class MaintenancePlanMapper {
             return;
         }
         managedObject.set(description, MP_DESCRIPTION);
+    }
+    
+    /**
+     * Retrieves the maintenance text from the managed object.
+     * 
+     * @return the maintenance text, or null if not set
+     * @since 1.0.0
+     */
+    public String getText() {
+        return (String) managedObject.get(MP_TEXT);
+    }
+    
+    /**
+     * Sets the maintenance text in the managed object.
+     * 
+     * @param text the maintenance text to set, null values are ignored
+     * @since 1.0.0
+     */
+    public void setText(String text) {
+        if (text == null) {
+            return;
+        }
+        managedObject.set(text, MP_TEXT);
     }
     
     public DateTime getStartDate() {
