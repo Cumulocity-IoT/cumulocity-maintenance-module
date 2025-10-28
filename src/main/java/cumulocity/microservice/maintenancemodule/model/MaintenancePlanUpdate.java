@@ -5,6 +5,7 @@ import java.util.List;
 
 import javax.validation.Valid;
 
+import org.joda.time.DateTime;
 import org.springframework.validation.annotation.Validated;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -36,12 +37,10 @@ public class MaintenancePlanUpdate {
     private String text;
 
     @Schema(description = "Start date and time for the maintenance", example = "2025-01-01T09:00:00Z")
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'")
-    private LocalDateTime startDate;
+    private DateTime startDate;
 
     @Schema(description = "End date and time for the maintenance", example = "2025-12-31T17:00:00Z")
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'")
-    private LocalDateTime endDate;
+    private DateTime endDate;
 
     @Schema(description = "Indicates whether the maintenance plan is active", example = "true")
     private Boolean active;

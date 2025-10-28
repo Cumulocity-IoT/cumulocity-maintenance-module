@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -53,8 +54,8 @@ public class MaintenancePlanService {
      * @return list response with pagination information
      * @since 1.0.0
      */
-    public MaintenancePlanListResponse getAllMaintenancePlans(Boolean active, LocalDateTime startDate, 
-                                                              LocalDateTime endDate, Integer pageSize, 
+    public MaintenancePlanListResponse getAllMaintenancePlans(Boolean active, DateTime startDate, 
+                                                              DateTime endDate, Integer pageSize, 
                                                               Integer pageNumber, Boolean withTotalPages) {
         log.info("getAllMaintenancePlans(active: {}, startDate: {}, endDate: {}, pageSize: {}, pageNumber: {}, withTotalPages: {})", 
                  active, startDate, endDate, pageSize, pageNumber, withTotalPages);
@@ -147,7 +148,7 @@ public class MaintenancePlanService {
      * @return true if plan matches filter criteria
      * @since 1.0.0
      */
-    private boolean filterByDateRange(MaintenancePlan plan, LocalDateTime startDate, LocalDateTime endDate) {
+    private boolean filterByDateRange(MaintenancePlan plan, DateTime startDate, DateTime endDate) {
         if (startDate != null && plan.getStartDate() != null) {
             if (plan.getStartDate().isBefore(startDate)) {
                 return false;

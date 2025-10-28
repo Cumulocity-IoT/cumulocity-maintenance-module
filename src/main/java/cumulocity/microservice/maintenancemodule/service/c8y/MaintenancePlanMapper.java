@@ -3,6 +3,8 @@ package cumulocity.microservice.maintenancemodule.service.c8y;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.joda.time.DateTime;
+
 import com.cumulocity.model.idtype.GId;
 import com.cumulocity.rest.representation.inventory.ManagedObjectRepresentation;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -145,30 +147,30 @@ public class MaintenancePlanMapper {
         managedObject.set(description, MP_DESCRIPTION);
     }
     
-    public LocalDateTime getStartDate() {
+    public DateTime getStartDate() {
         Object startDate = managedObject.get(MP_START_DATE);
-        if (startDate instanceof LocalDateTime) {
-            return (LocalDateTime) startDate;
+        if (startDate instanceof DateTime) {
+            return (DateTime) startDate;
         }
         return parseDateTime(startDate);
     }
     
-    public void setStartDate(LocalDateTime startDate) {
+    public void setStartDate(DateTime startDate) {
         if (startDate == null) {
             return;
         }
         managedObject.set(startDate, MP_START_DATE);
     }
     
-    public LocalDateTime getEndDate() {
+    public DateTime getEndDate() {
         Object endDate = managedObject.get(MP_END_DATE);
-        if (endDate instanceof LocalDateTime) {
-            return (LocalDateTime) endDate;
+        if (endDate instanceof DateTime) {
+            return (DateTime) endDate;
         }
         return parseDateTime(endDate);
     }
     
-    public void setEndDate(LocalDateTime endDate) {
+    public void setEndDate(DateTime endDate) {
         if (endDate == null) {
             return;
         }
@@ -205,13 +207,13 @@ public class MaintenancePlanMapper {
         return managedObject;
     }
     
-    private LocalDateTime parseDateTime(Object obj) {
+    private DateTime parseDateTime(Object obj) {
         if (obj == null) {
             return null;
         }
         if (obj instanceof String) {
             try {
-                return LocalDateTime.parse((String) obj);
+                return DateTime.parse((String) obj);
             } catch (Exception e) {
                 return null;
             }

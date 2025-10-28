@@ -3,6 +3,7 @@ package cumulocity.microservice.maintenancemodule.controller;
 import java.time.LocalDateTime;
 import java.util.Map;
 
+import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -55,8 +56,8 @@ public class MaintenancePlanController {
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<MaintenancePlanListResponse> getAllMaintenancePlans(
             @RequestParam(required = false) Boolean active,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime endDate,
             @RequestParam(defaultValue = "20") Integer pageSize,
             @RequestParam(defaultValue = "0") Integer pageNumber) {
         
