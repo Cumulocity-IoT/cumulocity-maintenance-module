@@ -1,0 +1,20 @@
+{
+  name: "Combined Maintenance: High Operating Hours & Restart Alarms",
+  description: "Triggers maintenance if operating hours for a device exceed 30,000 AND the count of 'restartAlarm' type alarms exceeds 200.",
+  startDate: "2025-05-22T00:00:00Z",
+  endDate: "2026-05-22T00:00:00Z",
+  active: true,
+  on: [
+    {
+      type: "Usage-based",
+      counter: {
+          subscription: {
+            api: "alarms",
+            typeFilter: "restartAlarm"
+          },
+          valueFragment: "count",
+          thresholdValue: 200
+        }
+    }
+  ]
+}

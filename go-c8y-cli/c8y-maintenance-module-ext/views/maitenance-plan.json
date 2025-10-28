@@ -1,0 +1,21 @@
+{
+    "$schema": "https://raw.githubusercontent.com/reubenmiller/go-c8y-cli/feat/extensions-manager/tools/schema/views.json",
+    "version": "v1",
+    "definitions": [
+        {
+            "name": "maitenance-plan",
+            "priority": 350,
+            "requestPath": "service/maintenance-module/api/maintenance-plans",
+            "requestMethod": "GET",
+            "columns": [
+                "id",
+                "name",
+                "description",
+                "startDate",
+                "endDate",
+                "active",
+                "on"
+            ]
+        }
+    ]
+}
