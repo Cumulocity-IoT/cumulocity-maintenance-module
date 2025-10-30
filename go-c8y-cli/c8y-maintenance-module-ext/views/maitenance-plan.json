@@ -14,7 +14,8 @@
                 "startDate",
                 "endDate",
                 "active",
-                "on"
+                "notificationType",
+                "notificationText"
             ]
         }
     ]

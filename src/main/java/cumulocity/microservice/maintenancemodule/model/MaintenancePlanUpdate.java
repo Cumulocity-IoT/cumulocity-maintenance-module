@@ -1,14 +1,11 @@
 package cumulocity.microservice.maintenancemodule.model;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 import javax.validation.Valid;
 
 import org.joda.time.DateTime;
 import org.springframework.validation.annotation.Validated;
-
-import com.fasterxml.jackson.annotation.JsonFormat;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
@@ -33,8 +30,11 @@ public class MaintenancePlanUpdate {
     @Schema(description = "Detailed description of the maintenance plan", example = "Monthly maintenance check for all production equipment")
     private String description;
 
-    @Schema(description = "Maintenance text which can be used to initialize the maintenance instance")
-    private String text;
+    @Schema(description = "Maintenance text which can be used to initialize the maintenance alarm text")
+    private String notificationText;
+
+    @Schema(description = "Maintenance type which can be used to initialize the maintenance alarm type")
+    private String notificationType;
 
     @Schema(description = "Start date and time for the maintenance", example = "2025-01-01T09:00:00Z")
     private DateTime startDate;
