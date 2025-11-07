@@ -2,7 +2,7 @@ package cumulocity.microservice.maintenancemodule.model;
 
 import java.util.List;
 
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 
 import org.joda.time.DateTime;
 import org.springframework.validation.annotation.Validated;
