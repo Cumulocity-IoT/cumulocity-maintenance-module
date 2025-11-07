@@ -1,0 +1,573 @@
+openapi: 3.0.1
+info:
+  title: Maintenance Plans API
+  description: CRUD API for managing maintenance plans in the Cumulocity maintenance module. Supports time-based, usage-based, and condition-based maintenance triggers.
+  version: 1.0.0
+  contact:
+    name: Maintenance API Support
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.example.com/v1
+    description: Production server
+  - url: https://staging-api.example.com/v1
+    description: Staging server
+
+paths:
+  /maintenance-plans:
+    get:
+      summary: Get all maintenance plans
+      description: Retrieve a list of all maintenance plans with optional filtering
+      operationId: getMaintenancePlans
+      parameters:
+        - name: active
+          in: query
+          description: Filter by active status
+          required: false
+          schema:
+            type: boolean
+        - name: startDate
+          in: query
+          description: Filter plans starting after this date
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: endDate
+          in: query
+          description: Filter plans ending before this date
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: limit
+          in: query
+          description: Maximum number of items to return
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          description: Number of items to skip
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  maintenancePlans:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MaintenancePlan'
+                  currentPage:
+                    type: integer
+                    description: Current page number (0-based)
+                    example: 0
+                  pageSize:
+                    type: integer
+                    description: Number of items per page
+                    example: 20
+                  totalPages:
+                    type: integer
+                    description: Total number of pages
+                    example: 8
+                  totalElements:
+                    type: integer
+                    format: int64
+                    description: Total number of elements across all pages
+                    example: 150
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      summary: Create a new maintenance plan
+      description: Create a new maintenance plan with time-based, usage-based, or condition-based triggers
+      operationId: createMaintenancePlan
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MaintenancePlanCreate'
+      responses:
+        '201':
+          description: Maintenance plan created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaintenancePlan'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /maintenance-plans/{id}:
+    get:
+      summary: Get a specific maintenance plan
+      description: Retrieve a maintenance plan by its unique ID
+      operationId: getMaintenancePlan
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Unique identifier of the maintenance plan
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaintenancePlan'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    put:
+      summary: Update a maintenance plan
+      description: Update an existing maintenance plan by replacing all fields
+      operationId: updateMaintenancePlan
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Unique identifier of the maintenance plan
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MaintenancePlanUpdate'
+      responses:
+        '200':
+          description: Maintenance plan updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaintenancePlan'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    delete:
+      summary: Delete a maintenance plan
+      description: Delete an existing maintenance plan by its ID
+      operationId: deleteMaintenancePlan
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Unique identifier of the maintenance plan
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Maintenance plan deleted successfully
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  schemas:
+    MaintenancePlan:
+      type: object
+      description: Complete maintenance plan with all fields including generated ID
+      properties:
+        id:
+          type: integer
+          description: Unique identifier for the maintenance entry
+          readOnly: true
+          example: 101
+        name:
+          type: string
+          description: Name of the maintenance entry
+          example: "Quarterly Server Check"
+        description:
+          type: string
+          description: Detailed description of the maintenance entry
+          example: "Perform server health checks and updates every quarter"
+        notificationText:
+          type: string
+          description: Maintenance text which can be used to initialize the maintenance alarm text.
+        notificationType:
+          type: string
+          enum: ["alarm", "event"]
+          description: Maintenance type which can be used to initialize the maintenance alarm type.
+        startDate:
+          type: string
+          format: date-time
+          description: Start date and time for the maintenance
+          example: "2025-01-01T08:00:00Z"
+        endDate:
+          type: string
+          format: date-time
+          description: End date and time for the maintenance
+          example: "2025-12-31T17:00:00Z"
+        active:
+          type: boolean
+          description: Indicates whether the maintenance entry is active
+          example: true
+        on:
+          type: array
+          description: List of maintenance triggers. The maintenance plan is activated if ANY of these trigger conditions are met (OR connection)
+          items:
+            $ref: '#/components/schemas/MaintenanceTrigger'
+      required:
+        - id
+        - name
+        - description
+        - startDate
+        - endDate
+        - active
+        - on
+
+    MaintenancePlanCreate:
+      type: object
+      description: Schema for creating a new maintenance plan (excludes the auto-generated ID)
+      properties:
+        name:
+          type: string
+          description: Name of the maintenance entry
+          example: "Quarterly Server Check"
+        description:
+          type: string
+          description: Detailed description of the maintenance entry
+          example: "Perform server health checks and updates every quarter"
+        notificationText:
+          type: string
+          description: Maintenance text which can be used to initialize the maintenance alarm text.
+        notificationType:
+          type: string
+          enum: ["alarm", "event"]
+          description: Maintenance type which can be used to initialize the maintenance alarm type.
+        startDate:
+          type: string
+          format: date-time
+          description: Start date and time for the maintenance
+          example: "2025-01-01T08:00:00Z"
+        endDate:
+          type: string
+          format: date-time
+          description: End date and time for the maintenance
+          example: "2025-12-31T17:00:00Z"
+        active:
+          type: boolean
+          description: Indicates whether the maintenance entry is active
+          example: true
+        on:
+          type: array
+          description: List of maintenance triggers
+          items:
+            $ref: '#/components/schemas/MaintenanceTrigger'
+      required:
+        - name
+        - description
+        - startDate
+        - endDate
+        - active
+        - on
+
+    MaintenancePlanUpdate:
+      type: object
+      description: Schema for updating a maintenance plan (excludes the ID which cannot be modified)
+      properties:
+        name:
+          type: string
+          description: Name of the maintenance entry
+        description:
+          type: string
+          description: Detailed description of the maintenance entry
+        notificationText:
+          type: string
+          description: Maintenance text which can be used to initialize the maintenance alarm text.
+        notificationType:
+          type: string
+          enum: ["alarm", "event"]
+          description: Maintenance type which can be used to initialize the maintenance alarm type.
+        startDate:
+          type: string
+          format: date-time
+          description: Start date and time for the maintenance
+        endDate:
+          type: string
+          format: date-time
+          description: End date and time for the maintenance
+        active:
+          type: boolean
+          description: Indicates whether the maintenance entry is active
+        on:
+          type: array
+          description: List of maintenance triggers
+          items:
+            $ref: '#/components/schemas/MaintenanceTrigger'
+      required:
+        - name
+        - description
+        - startDate
+        - endDate
+        - active
+        - on
+
+    MaintenanceTrigger:
+      oneOf:
+        - $ref: '#/components/schemas/TimeBasedTrigger'
+        - $ref: '#/components/schemas/UsageBasedTrigger'
+        - $ref: '#/components/schemas/ConditionBasedTrigger'
+      discriminator:
+        propertyName: type
+        mapping:
+          Time-based: '#/components/schemas/TimeBasedTrigger'
+          Usage-based: '#/components/schemas/UsageBasedTrigger'
+          Condition-based: '#/components/schemas/ConditionBasedTrigger'
+
+    TimeBasedTrigger:
+      type: object
+      description: Time-based maintenance trigger using ISO 8601 duration intervals
+      properties:
+        type:
+          type: string
+          enum: ["Time-based"]
+          description: Type of maintenance trigger
+        interval:
+          type: string
+          description: Interval for time-based maintenance using ISO 8601 duration format
+          pattern: '^P(?!$)(\d+Y)?(\d+M)?(\d+W)?(\d+D)?(T(?!$)(\d+H)?(\d+M)?(\d+S)?)?$'
+          example: "P3M"
+      required:
+        - type
+        - interval
+      additionalProperties: false
+
+    UsageBasedTrigger:
+      type: object
+      description: Usage-based maintenance trigger based on counters and thresholds
+      properties:
+        type:
+          type: string
+          enum: ["Usage-based"]
+          description: Usage-based maintenance trigger
+        counter:
+          $ref: '#/components/schemas/UsageCounter'
+      required:
+        - type
+        - counter
+      additionalProperties: false
+
+    ConditionBasedTrigger:
+      type: object
+      description: Condition-based maintenance trigger with multiple conditions
+      properties:
+        type:
+          type: string
+          enum: ["Condition-based"]
+          description: Condition-based maintenance trigger
+        conditions:
+          type: array
+          description: List of conditions for condition-based maintenance. The maintenance plan is activated if ALL of these conditions are met (AND connection)
+          items:
+            $ref: '#/components/schemas/MaintenanceCondition'
+      required:
+        - type
+        - conditions
+      additionalProperties: false
+
+    UsageCounter:
+      type: object
+      description: Single counter for usage-based maintenance defining criteria for triggers
+      properties:
+        subscription:
+          $ref: '#/components/schemas/Subscription'
+        valueFragment:
+          type: string
+          description: JSONPath expression to extract the value from data structure
+          example: "$.operatingHours.t"
+        cycleValue:
+          type: integer
+          description: Recurring value counter for continuously incremented counters
+          nullable: true
+          example: 1000
+        thresholdValue:
+          type: integer
+          description: Threshold (limit) value for counters that reset after reaching the threshold
+          nullable: true
+          example: 200
+      required:
+        - subscription
+        - valueFragment
+      oneOf:
+        - required: ["cycleValue"]
+          not:
+            required: ["thresholdValue"]
+        - required: ["thresholdValue"]
+          not:
+            required: ["cycleValue"]
+      additionalProperties: false
+
+    MaintenanceCondition:
+      type: object
+      description: Individual condition for condition-based maintenance triggers
+      properties:
+        subscription:
+          $ref: '#/components/schemas/Subscription'
+        valueFragment:
+          type: string
+          description: JSONPath expression to extract the value from data structure
+          example: "$.c8y_Temperature.t"
+        operator:
+          type: string
+          enum: ["gt", "lt", "eq"]
+          description: Comparison operator (gt=greater than, lt=less than, eq=equal)
+        value:
+          oneOf:
+            - type: string
+            - type: number
+          description: Value to compare against for the condition
+          example: 199
+      required:
+        - subscription
+        - valueFragment
+        - operator
+        - value
+      additionalProperties: false
+
+    Subscription:
+      type: object
+      description: Subscription details for Usage-based and Condition-based triggers
+      properties:
+        api:
+          type: string
+          enum:
+            - alarms
+            - events
+            - measurements
+            - managedobjects
+            - operations
+          description: API type for the subscription
+        typeFilter:
+          type: string
+          description: Type filter for the subscription
+          example: "c8y_Temperature"
+      required:
+        - api
+        - typeFilter
+      additionalProperties: false
+
+    Error:
+      type: object
+      description: Error response object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              description: Error code
+              example: "VALIDATION_ERROR"
+            message:
+              type: string
+              description: Human-readable error message
+              example: "The provided data is invalid"
+            details:
+              type: array
+              description: Detailed error information
+              items:
+                type: object
+                properties:
+                  field:
+                    type: string
+                    description: Field that caused the error
+                  message:
+                    type: string
+                    description: Specific error message for the field
+      required:
+        - error
+
+  responses:
+    BadRequest:
+      description: Bad request - invalid input parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              code: "BAD_REQUEST"
+              message: "Invalid request parameters"
+
+    NotFound:
+      description: The requested resource was not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              code: "NOT_FOUND"
+              message: "Maintenance plan not found"
+
+    ValidationError:
+      description: Validation error - request data does not meet schema requirements
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              code: "VALIDATION_ERROR"
+              message: "The provided data is invalid"
+              details:
+                - field: "startDate"
+                  message: "Start date must be before end date"
+                - field: "on"
+                  message: "At least one trigger must be specified"
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              code: "INTERNAL_ERROR"
+              message: "An unexpected error occurred"
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token for authentication
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Maintenance Plans
+    description: Operations for managing maintenance plans

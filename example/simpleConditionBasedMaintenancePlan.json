@@ -1,0 +1,40 @@
+{
+  "id": 201,
+  "name": "Critical Sensor Monitoring",
+  "description": "Monitors temperature and vibration sensors to detect potential equipment failures requiring immediate maintenance attention.",
+  "notificationType": "alarm",
+  "notificationText": "MAINTENANCE REQUIRED: Critical sensor thresholds exceeded. TECHNICIAN INSTRUCTIONS: 1) Check temperature sensor readings - if above 80°C, inspect cooling system and replace filters if necessary. 2) Check vibration levels - if above 5.0 units, inspect motor bearings and belt tension. 3) Document all findings in maintenance log. 4) Contact supervisor if readings remain critical after initial checks. Safety: Ensure equipment is in safe mode before inspection.",
+  "startDate": "2025-01-01T00:00:00Z",
+  "endDate": "2025-12-31T23:59:59Z",
+  "active": true,
+  "on": [
+    {
+      "type": "Condition-based",
+      "conditions": [
+        {
+          "subscription": {
+            "api": "measurements",
+            "typeFilter": "c8y_Temperature"
+          },
+          "valueFragment": "c8y_Temperature.T.value",
+          "operator": "gt",
+          "value": 80
+        }
+      ]
+    },
+    {
+      "type": "Condition-based", 
+      "conditions": [
+        {
+          "subscription": {
+            "api": "measurements",
+            "typeFilter": "c8y_Vibration"
+          },
+          "valueFragment": "c8y_Vibration.vibration.value",
+          "operator": "gt",
+          "value": 5.0
+        }
+      ]
+    }
+  ]
+}
