@@ -1,41 +1,14 @@
 # Brainstorming Ideas for Device Assignment
 
-The MaintenancePlan should include a fragment `devices` that contains a list of devices. Each device should have the following properties:
+The MaintenancePlan should include a fragment `apply` that contains the filter criteria for devices. Each filter criteria is optional, however at least one must be provided. If more than one filter criteria is provided, the criterias are combined with OR logic. This means each filter criteria will be evaluated independently and devices matching any of the criteria will be included in the result set. If the device is in the result set of more than one filter criteria, the result set contains only one instance of the device. The filter criteria `query` allows for Cumulocity Query Language (CQL) expressions to be used for more complex filtering.
 
 ```json
-"devices": [
-  {
-    "id": "12345",
-    "name": "Device A",
-    "self": "https://cumulocity.de/inventory/managedObjects/12345"
-  },
-  {
-    "id": "67890",
-    "name": "Device B",
-    "self": "https://cumulocity.de/inventory/managedObjects/67890"
-  }
-  ]
+"apply": {
+  "types": ["c8y_Device", "c8y_Sensor"],
+  "idsInternal": [ "12345", "67890" ],
+  "idsSerial": ["SN123456", "356789012345678"],
+  "query": "ec_Service.ec_WindFarmId eq 100117"
+}
 ```
 
-```json
-"devices": [
-  {
-    "managedObject": {
-      "id": "54321",
-      "name": "Device C",
-      "self": "https://cumulocity.de/inventory/managedObjects/54321"
-    }
-  },
-  {
-    "managedObject": {
-      "id": "09876",
-      "name": "Device D",
-      "self": "https://cumulocity.de/inventory/managedObjects/09876"
-    }
-  }
-]
-```
-
-The `devices` fragment can be used to assign devices to a maintenance plan. The structure allows for flexibility in how devices are represented, either as a simple list of device identifiers or as objects containing more detailed information about each device.
-
-The device assignment can be done through a PUT request to the maintenance plan endpoint, where the `devices` fragment is included in the request body. This allows for updating the list of devices associated with a specific maintenance plan.
+The above example will include all devices of type `c8y_Device` or `c8y_Sensor`, as well as devices with internal IDs `12345` or `67890`, devices with serial numbers `SN123456` or `356789012345678`, and devices that belong to the wind farm with ID `100117`. Any device that matches at least one of these criteria will be included in the final result set for the MaintenancePlan.
