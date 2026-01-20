@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import cumulocity.microservice.maintenancemodule.model.DeviceAssignment;
 import cumulocity.microservice.maintenancemodule.model.MaintenancePlan;
 import cumulocity.microservice.maintenancemodule.model.MaintenancePlanCreate;
 import cumulocity.microservice.maintenancemodule.model.MaintenancePlanListResponse;
@@ -133,6 +134,51 @@ public class MaintenancePlanController {
     public ResponseEntity<Void> deleteMaintenancePlan(@PathVariable Integer id) {
         
         maintenancePlanService.deleteMaintenancePlan(id);
+        
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    /**
+     * Update device assignment for a maintenance plan
+     * 
+     * @param id The unique identifier of the maintenance plan
+     * @param deviceAssignment The device assignment filter criteria
+     * @return The updated device assignment
+     */
+    @PutMapping(path = "/{id}/apply", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<DeviceAssignment> updateDeviceAssignment(
+            @PathVariable Integer id,
+            @RequestBody DeviceAssignment deviceAssignment) {
+        
+        DeviceAssignment updated = maintenancePlanService.updateDeviceAssignment(id, deviceAssignment);
+        
+        return new ResponseEntity<>(updated, HttpStatus.OK);
+    }
+
+    /**
+     * Get device assignment for a maintenance plan
+     * 
+     * @param id The unique identifier of the maintenance plan
+     * @return The device assignment filter criteria
+     */
+    @GetMapping(path = "/{id}/apply", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<DeviceAssignment> getDeviceAssignment(@PathVariable Integer id) {
+        
+        DeviceAssignment deviceAssignment = maintenancePlanService.getDeviceAssignment(id);
+        
+        return new ResponseEntity<>(deviceAssignment, HttpStatus.OK);
+    }
+
+    /**
+     * Remove device assignment from a maintenance plan
+     * 
+     * @param id The unique identifier of the maintenance plan
+     * @return Empty response with 204 status
+     */
+    @DeleteMapping(path = "/{id}/apply")
+    public ResponseEntity<Void> deleteDeviceAssignment(@PathVariable Integer id) {
+        
+        maintenancePlanService.deleteDeviceAssignment(id);
         
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }

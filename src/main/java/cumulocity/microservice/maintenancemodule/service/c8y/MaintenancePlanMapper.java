@@ -8,9 +8,11 @@ import com.cumulocity.model.idtype.GId;
 import com.cumulocity.rest.representation.inventory.ManagedObjectRepresentation;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import cumulocity.microservice.maintenancemodule.model.DeviceAssignment;
 import cumulocity.microservice.maintenancemodule.model.MaintenancePlan;
 import cumulocity.microservice.maintenancemodule.model.MaintenancePlanCreate;
 import cumulocity.microservice.maintenancemodule.model.MaintenanceTrigger;
+import cumulocity.microservice.maintenancemodule.model.TimeBasedTrigger;
 
 /**
  * Mapper class for converting between MaintenancePlan domain objects and Cumulocity ManagedObjectRepresentation.
@@ -30,6 +32,8 @@ public class MaintenancePlanMapper {
     public static final String MP_END_DATE = "mp_EndDate";
     public static final String MP_ACTIVE = "mp_Active";
     public static final String MP_ON = "mp_On";
+    public static final String MP_ON_TIME = "mp_OnTime";
+    public static final String MP_APPLY = "mp_Apply";
     
     private final ManagedObjectRepresentation managedObject;
     
@@ -54,6 +58,8 @@ public class MaintenancePlanMapper {
         mapper.setEndDate(maintenancePlanCreate.getEndDate());
         mapper.setActive(maintenancePlanCreate.getActive());
         mapper.setTriggers(maintenancePlanCreate.getOn());
+        mapper.setTimeBasedTrigger(maintenancePlanCreate.getOnTime());
+        mapper.setDeviceAssignment(maintenancePlanCreate.getApply());
         return mapper;
     }
     
@@ -79,6 +85,8 @@ public class MaintenancePlanMapper {
         mapper.setEndDate(maintenancePlan.getEndDate());
         mapper.setActive(maintenancePlan.getActive());
         mapper.setTriggers(maintenancePlan.getOn());
+        mapper.setTimeBasedTrigger(maintenancePlan.getOnTime());
+        mapper.setDeviceAssignment(maintenancePlan.getApply());
         return mapper;
     }
     
@@ -98,6 +106,8 @@ public class MaintenancePlanMapper {
         maintenancePlan.setEndDate(mapper.getEndDate());
         maintenancePlan.setActive(mapper.getActive());
         maintenancePlan.setOn(mapper.getTriggers());
+        maintenancePlan.setOnTime(mapper.getTimeBasedTrigger());
+        maintenancePlan.setApply(mapper.getDeviceAssignment());
         return maintenancePlan;
     }
     
@@ -240,6 +250,26 @@ public class MaintenancePlanMapper {
         }
         managedObject.set(active, MP_ACTIVE);
     }
+
+    public DeviceAssignment getDeviceAssignment() {
+        Object deviceAssignment = managedObject.get(MP_APPLY);
+        if (deviceAssignment instanceof DeviceAssignment) {
+            return (DeviceAssignment) deviceAssignment;
+        }
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            return mapper.convertValue(deviceAssignment, DeviceAssignment.class);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    public void setDeviceAssignment(DeviceAssignment deviceAssignment) {
+        if (deviceAssignment == null) {
+            return;
+        }
+        managedObject.set(deviceAssignment, MP_APPLY);
+    }
     
     @SuppressWarnings("unchecked")
     public List<MaintenanceTrigger> getTriggers() {
@@ -259,6 +289,26 @@ public class MaintenancePlanMapper {
     
     public ManagedObjectRepresentation getManagedObject() {
         return managedObject;
+    }
+
+    public TimeBasedTrigger getTimeBasedTrigger() {
+        Object onTime = managedObject.get(MP_ON_TIME);
+        if (onTime instanceof TimeBasedTrigger) {
+            return (TimeBasedTrigger) onTime;
+        }
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            return mapper.convertValue(onTime, TimeBasedTrigger.class);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    public void setTimeBasedTrigger(TimeBasedTrigger timeBasedTrigger) {
+        if (timeBasedTrigger == null) {
+            return;
+        }
+        managedObject.set(timeBasedTrigger, MP_ON_TIME);
     }
     
     private DateTime parseDateTime(Object obj) {

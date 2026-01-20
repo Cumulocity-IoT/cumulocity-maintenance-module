@@ -140,7 +140,6 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
     put:
       summary: Update a maintenance plan
       description: Update an existing maintenance plan by replacing all fields
@@ -192,7 +191,81 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
+  /maintenance-plans/{id}/apply:
+    put:
+      summary: Update device assignment for a maintenance plan
+      description: Update the device assignment filter criteria for an existing maintenance plan
+      operationId: updateDeviceAssignment
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Unique identifier of the maintenance plan
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeviceAssignment'
+      responses:
+        '200':
+          description: Device assignment updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceAssignment'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    
+    get:
+      summary: Get device assignment for a maintenance plan
+      description: Retrieve the device assignment filter criteria for a specific maintenance plan
+      operationId: getDeviceAssignment
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Unique identifier of the maintenance plan
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceAssignment'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    
+    delete:
+      summary: Remove device assignment from a maintenance plan
+      description: Remove all device assignment filter criteria from a maintenance plan
+      operationId: deleteDeviceAssignment
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Unique identifier of the maintenance plan
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Device assignment removed successfully
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 components:
   schemas:
     MaintenancePlan:
@@ -233,6 +306,10 @@ components:
           type: boolean
           description: Indicates whether the maintenance entry is active
           example: true
+        apply:
+          $ref: '#/components/schemas/DeviceAssignment'
+        onTime:
+          $ref: '#/components/schemas/TimeBasedTrigger'
         on:
           type: array
           description: List of maintenance triggers. The maintenance plan is activated if ANY of these trigger conditions are met (OR connection)
@@ -245,8 +322,9 @@ components:
         - startDate
         - endDate
         - active
-        - on
-
+      anyOf:
+        - required: ["on"]
+        - required: ["onTime"]
     MaintenancePlanCreate:
       type: object
       description: Schema for creating a new maintenance plan (excludes the auto-generated ID)
@@ -280,6 +358,10 @@ components:
           type: boolean
           description: Indicates whether the maintenance entry is active
           example: true
+        apply:
+          $ref: '#/components/schemas/DeviceAssignment'
+        onTime:
+          $ref: '#/components/schemas/TimeBasedTrigger'
         on:
           type: array
           description: List of maintenance triggers
@@ -291,7 +373,9 @@ components:
         - startDate
         - endDate
         - active
-        - on
+      anyOf:
+        - required: ["on"]
+        - required: ["onTime"]
 
     MaintenancePlanUpdate:
       type: object
@@ -321,6 +405,10 @@ components:
         active:
           type: boolean
           description: Indicates whether the maintenance entry is active
+        apply:
+          $ref: '#/components/schemas/DeviceAssignment'
+        onTime:
+          $ref: '#/components/schemas/TimeBasedTrigger'
         on:
           type: array
           description: List of maintenance triggers
@@ -332,37 +420,21 @@ components:
         - startDate
         - endDate
         - active
-        - on
+      anyOf:
+        - required: ["on"]
+        - required: ["onTime"]
+        - required: ["onUsage"]
+        - required: ["onCondition"]
 
     MaintenanceTrigger:
       oneOf:
-        - $ref: '#/components/schemas/TimeBasedTrigger'
         - $ref: '#/components/schemas/UsageBasedTrigger'
         - $ref: '#/components/schemas/ConditionBasedTrigger'
       discriminator:
         propertyName: type
         mapping:
-          Time-based: '#/components/schemas/TimeBasedTrigger'
           Usage-based: '#/components/schemas/UsageBasedTrigger'
           Condition-based: '#/components/schemas/ConditionBasedTrigger'
-
-    TimeBasedTrigger:
-      type: object
-      description: Time-based maintenance trigger using ISO 8601 duration intervals
-      properties:
-        type:
-          type: string
-          enum: ["Time-based"]
-          description: Type of maintenance trigger
-        interval:
-          type: string
-          description: Interval for time-based maintenance using ISO 8601 duration format
-          pattern: '^P(?!$)(\d+Y)?(\d+M)?(\d+W)?(\d+D)?(T(?!$)(\d+H)?(\d+M)?(\d+S)?)?$'
-          example: "P3M"
-      required:
-        - type
-        - interval
-      additionalProperties: false
 
     UsageBasedTrigger:
       type: object
@@ -476,6 +548,55 @@ components:
       required:
         - api
         - typeFilter
+      additionalProperties: false
+
+    DeviceAssignment:
+      type: object
+      description: Device assignment filter criteria. Each filter criteria is optional, however at least one must be provided. If more than one filter criteria is provided, the criterias are combined with OR logic. This means each filter criteria will be evaluated independently and devices matching any of the criteria will be included in the result set.
+      properties:
+        types:
+          type: array
+          description: List of device types to filter by (e.g., c8y_Device, c8y_Sensor)
+          items:
+            type: string
+          minItems: 1
+          example: ["c8y_Device", "c8y_Sensor"]
+        idsInternal:
+          type: array
+          description: List of internal device IDs to filter by
+          items:
+            type: string
+          minItems: 1
+          example: ["12345", "67890"]
+        idsSerial:
+          type: array
+          description: List of serial numbers to filter by
+          items:
+            type: string
+          minItems: 1
+          example: ["SN123456", "356789012345678"]
+        query:
+          type: string
+          description: Cumulocity Query Language (CQL) expression for complex filtering
+          example: "ec_Service.ec_WindFarmId eq 100117"
+      anyOf:
+        - required: ["types"]
+        - required: ["idsInternal"]
+        - required: ["idsSerial"]
+        - required: ["query"]
+      additionalProperties: false
+
+    TimeBasedTrigger:
+      type: object
+      description: Time-based maintenance trigger configuration
+      properties:
+        interval:
+          type: string
+          description: Interval for time-based maintenance using ISO 8601 duration format
+          pattern: '^P(?!$)(\d+Y)?(\d+M)?(\d+W)?(\d+D)?(T(?!$)(\d+H)?(\d+M)?(\d+S)?)?$'
+          example: "P30D"
+      required:
+        - interval
       additionalProperties: false
 
     Error:

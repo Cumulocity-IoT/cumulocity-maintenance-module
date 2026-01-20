@@ -17,7 +17,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
     property = "type"
 )
 @JsonSubTypes({
-    @JsonSubTypes.Type(value = TimeBasedTrigger.class, name = "Time-based"),
     @JsonSubTypes.Type(value = UsageBasedTrigger.class, name = "Usage-based"),
     @JsonSubTypes.Type(value = ConditionBasedTrigger.class, name = "Condition-based")
 })

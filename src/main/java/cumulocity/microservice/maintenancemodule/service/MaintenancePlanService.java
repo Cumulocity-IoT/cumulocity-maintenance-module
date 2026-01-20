@@ -19,6 +19,7 @@ import com.cumulocity.sdk.client.inventory.PagedManagedObjectCollectionRepresent
 import com.cumulocity.model.idtype.GId;
 import com.cumulocity.sdk.client.SDKException;
 
+import cumulocity.microservice.maintenancemodule.model.DeviceAssignment;
 import cumulocity.microservice.maintenancemodule.model.MaintenancePlan;
 import cumulocity.microservice.maintenancemodule.model.MaintenancePlanCreate;
 import cumulocity.microservice.maintenancemodule.model.MaintenancePlanListResponse;
@@ -381,6 +382,117 @@ public class MaintenancePlanService {
         }
         
         return true;
+    }
+
+    /**
+     * Updates device assignment for a maintenance plan.
+     * 
+     * @param id the unique identifier of the maintenance plan
+     * @param deviceAssignment the device assignment filter criteria
+     * @return the updated device assignment
+     * @throws IllegalArgumentException if id or deviceAssignment is null
+     * @throws RuntimeException if plan not found or update fails
+     * @since 1.0.0
+     */
+    public DeviceAssignment updateDeviceAssignment(Integer id, DeviceAssignment deviceAssignment) {
+        if (id == null) {
+            throw new IllegalArgumentException("Maintenance plan ID cannot be null");
+        }
+        if (deviceAssignment == null) {
+            throw new IllegalArgumentException("DeviceAssignment cannot be null");
+        }
+        
+        log.info("updateDeviceAssignment(id: {}, deviceAssignment: {})", id, deviceAssignment);
+        
+        try {
+            // Get the existing maintenance plan
+            MaintenancePlan maintenancePlan = getMaintenancePlan(id);
+            if (maintenancePlan == null) {
+                throw new RuntimeException("Maintenance plan with ID " + id + " not found");
+            }
+            
+            // Update the apply field
+            maintenancePlan.setApply(deviceAssignment);
+            
+            // Update the maintenance plan
+            updateMaintenancePlan(id, maintenancePlan);
+            
+            log.info("Successfully updated device assignment for maintenance plan with ID: {}", id);
+            return deviceAssignment;
+            
+        } catch (Exception e) {
+            log.error("Failed to update device assignment for maintenance plan with ID: {}", id, e);
+            throw new RuntimeException("Failed to update device assignment: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Retrieves device assignment for a maintenance plan.
+     * 
+     * @param id the unique identifier of the maintenance plan
+     * @return the device assignment filter criteria
+     * @throws IllegalArgumentException if id is null
+     * @throws RuntimeException if plan not found or retrieval fails
+     * @since 1.0.0
+     */
+    public DeviceAssignment getDeviceAssignment(Integer id) {
+        if (id == null) {
+            throw new IllegalArgumentException("Maintenance plan ID cannot be null");
+        }
+        
+        log.debug("Retrieving device assignment for maintenance plan with ID: {}", id);
+        
+        try {
+            MaintenancePlan maintenancePlan = getMaintenancePlan(id);
+            if (maintenancePlan == null) {
+                throw new RuntimeException("Maintenance plan with ID " + id + " not found");
+            }
+            
+            DeviceAssignment deviceAssignment = maintenancePlan.getApply();
+            
+            log.debug("Successfully retrieved device assignment for maintenance plan with ID: {}", id);
+            return deviceAssignment;
+            
+        } catch (Exception e) {
+            log.error("Failed to retrieve device assignment for maintenance plan with ID: {}", id, e);
+            throw new RuntimeException("Failed to retrieve device assignment: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Removes device assignment from a maintenance plan.
+     * 
+     * @param id the unique identifier of the maintenance plan
+     * @throws IllegalArgumentException if id is null
+     * @throws RuntimeException if plan not found or update fails
+     * @since 1.0.0
+     */
+    public void deleteDeviceAssignment(Integer id) {
+        if (id == null) {
+            throw new IllegalArgumentException("Maintenance plan ID cannot be null");
+        }
+        
+        log.debug("Deleting device assignment for maintenance plan with ID: {}", id);
+        
+        try {
+            // Get the existing maintenance plan
+            MaintenancePlan maintenancePlan = getMaintenancePlan(id);
+            if (maintenancePlan == null) {
+                throw new RuntimeException("Maintenance plan with ID " + id + " not found");
+            }
+            
+            // Remove the apply field
+            maintenancePlan.setApply(null);
+            
+            // Update the maintenance plan
+            updateMaintenancePlan(id, maintenancePlan);
+            
+            log.info("Successfully deleted device assignment for maintenance plan with ID: {}", id);
+            
+        } catch (Exception e) {
+            log.error("Failed to delete device assignment for maintenance plan with ID: {}", id, e);
+            throw new RuntimeException("Failed to delete device assignment: " + e.getMessage(), e);
+        }
     }
 
 }

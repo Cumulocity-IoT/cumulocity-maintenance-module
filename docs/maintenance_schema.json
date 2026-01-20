@@ -23,6 +23,114 @@
       },
       "required": ["api", "typeFilter"],
       "additionalProperties": false
+    },
+    "apply": {
+      "type": "object",
+      "description": "Device assignment filter criteria. Each filter criteria is optional, however at least one must be provided. If more than one filter criteria is provided, the criterias are combined with OR logic. This means each filter criteria will be evaluated independently and devices matching any of the criteria will be included in the result set.",
+      "properties": {
+        "types": {
+          "type": "array",
+          "description": "List of device types to filter by (e.g., c8y_Device, c8y_Sensor).",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1
+        },
+        "idsInternal": {
+          "type": "array",
+          "description": "List of internal device IDs to filter by.",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1
+        },
+        "idsSerial": {
+          "type": "array",
+          "description": "List of serial numbers to filter by.",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1
+        },
+        "query": {
+          "type": "string",
+          "description": "Cumulocity Query Language (CQL) expression for complex filtering."
+        }
+      },
+      "anyOf": [
+        { "required": ["types"] },
+        { "required": ["idsInternal"] },
+        { "required": ["idsSerial"] },
+        { "required": ["query"] }
+      ],
+      "additionalProperties": false
+    },
+    "onTime": {
+      "type": "object",
+      "description": "Time-based maintenance trigger configuration.",
+      "properties": {
+        "interval": {
+          "type": "string",
+          "description": "Interval for time-based maintenance using ISO 8601 duration format.",
+          "pattern": "^P(?!$)(\\d+Y)?(\\d+M)?(\\d+W)?(\\d+D)?(T(?!$)(\\d+H)?(\\d+M)?(\\d+S)?)?$",
+          "examples": ["P3M", "P30D", "P1Y6M"]
+        }
+      },
+      "required": ["interval"],
+      "additionalProperties": false
+    },
+    "onUsage": {
+      "type": "object",
+      "description": "Simplified usage-based maintenance trigger configuration.",
+      "properties": {
+        "subscription": {
+          "$ref": "#/$defs/subscription"
+        },
+        "valueFragment": {
+          "type": "string",
+          "description": "Fragment or field to extract the value from. The valueFragment is a JSONPath expression (e.g., $.property.subproperty[0].value, $.items[*]) that specifies the path to the value within the data structure."
+        },
+        "cycleValue": {
+          "type": "integer",
+          "description": "Recurring value counter. This option should be used when the counter is continuesly incremented (e.g., operating hours, cycle count).",
+          "nullable": true
+        },
+        "thresholdValue": {
+          "type": "integer",
+          "description": "Threshold (limit) value for the counter. This option should be used when the counter is reset after reaching the threshold.",
+          "nullable": true
+        }
+      },
+      "required": ["valueFragment"],
+      "oneOf": [
+        { "required": ["cycleValue"], "not": { "required": ["thresholdValue"] } },
+        { "required": ["thresholdValue"], "not": { "required": ["cycleValue"] } }
+      ],
+      "additionalProperties": false
+    },
+    "onCondition": {
+      "type": "object",
+      "description": "Simplified condition-based maintenance trigger configuration.",
+      "properties": {
+        "subscription": {
+          "$ref": "#/$defs/subscription"
+        },
+        "valueFragment": {
+          "type": "string",
+          "description": "Fragment or field to extract the value from. The valueFragment is a JSONPath expression (e.g., $.property.subproperty[0].value, $.items[*]) that specifies the path to the value within the data structure."
+        },
+        "operator": {
+          "type": "string",
+          "enum": ["gt", "lt", "eq"],
+          "description": "Operator for the condition. Allowed: gt (greater than), lt (less than), eq (equal)."
+        },
+        "value": {
+          "type": ["string", "number"],
+          "description": "Value to compare against for the condition."
+        }
+      },
+      "required": ["valueFragment", "operator", "value"],
+      "additionalProperties": false
     }
   },
   "type": "object",
@@ -37,12 +145,13 @@
       "startDate": "2025-01-01T08:00:00Z",
       "endDate": "2025-12-31T17:00:00Z",
       "active": true,
-      "on": [
-        {
-          "type": "Time-based",
-          "interval": "P3M"
-        }
-      ]
+      "onTime": {
+        "interval": "P3M"
+      },
+      "apply": {
+        "types": ["c8y_Device"],
+        "query": "ec_Service.ec_WindFarmId eq 100117"
+      }
     }
   ],
   "properties": {
@@ -82,29 +191,17 @@
       "type": "boolean",
       "description": "Indicates whether the maintenance entry is active."
     },
+    "apply": {
+      "$ref": "#/$defs/apply"
+    },
+    "onTime": {
+      "$ref": "#/$defs/onTime"
+    },
     "on": {
       "type": "array",
       "description": "List of maintenance triggers. The maintenance plan is activated if ANY of these trigger conditions are met (OR connection).",
       "items": {
         "oneOf": [
-          {
-            "type": "object",
-            "properties": {
-              "type": {
-                "type": "string",
-                "enum": ["Time-based"],
-                "description": "Type of maintenance trigger."
-              },
-              "interval": {
-                "type": "string",
-                "description": "Interval for time-based maintenance using ISO 8601 duration format.",
-                "pattern": "^P(?!$)(\\d+Y)?(\\d+M)?(\\d+W)?(\\d+D)?(T(?!$)(\\d+H)?(\\d+M)?(\\d+S)?)?$",
-                "examples": ["P3M", "P30D", "P1Y6M"]
-              }
-            },
-            "required": ["type", "interval"],
-            "additionalProperties": false
-          },
           {
             "type": "object",
             "properties": {
@@ -227,5 +324,9 @@
       }
     }
   },
-  "required": ["id", "name", "startDate", "endDate", "active", "on"]
+  "required": ["id", "name", "startDate", "endDate", "active"],
+  "anyOf": [
+    { "required": ["on"] },
+    { "required": ["onTime"] }
+  ]
 }

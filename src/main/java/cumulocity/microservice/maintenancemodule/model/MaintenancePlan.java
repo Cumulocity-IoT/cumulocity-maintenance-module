@@ -60,7 +60,15 @@ public class MaintenancePlan {
     @Schema(description = "Indicates whether the maintenance plan is active", example = "true")
     private Boolean active;
 
-    @Schema(description = "List of maintenance triggers")
+    @Schema(description = "Device assignment filter criteria")
+    @Valid
+    private DeviceAssignment apply;
+
+    @Schema(description = "Simplified time-based maintenance trigger")
+    @Valid
+    private TimeBasedTrigger onTime;
+
+    @Schema(description = "List of usage-based maintenance triggers (supports multiple counters)")
     @Valid
     private List<MaintenanceTrigger> on;
 }

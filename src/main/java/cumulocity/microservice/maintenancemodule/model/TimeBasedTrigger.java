@@ -20,12 +20,7 @@ import lombok.RequiredArgsConstructor;
 @NoArgsConstructor
 @Schema(description = "Time-based maintenance trigger using ISO 8601 duration intervals")
 @Validated
-public class TimeBasedTrigger implements MaintenanceTrigger {
-
-    @Schema(required = true, description = "Type of trigger", example = "Time-based")
-    @NotNull
-    @NonNull
-    private String type = "Time-based";
+public class TimeBasedTrigger {
 
     @Schema(required = true, description = "ISO 8601 duration interval", example = "PT1H")
     @NotNull
