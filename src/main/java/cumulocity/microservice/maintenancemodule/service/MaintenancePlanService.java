@@ -1,9 +1,7 @@
 package cumulocity.microservice.maintenancemodule.service;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.joda.time.DateTime;
@@ -15,11 +13,10 @@ import com.cumulocity.rest.representation.inventory.ManagedObjectRepresentation;
 import com.cumulocity.sdk.client.inventory.InventoryApi;
 import com.cumulocity.sdk.client.inventory.InventoryFilter;
 import com.cumulocity.sdk.client.inventory.ManagedObjectCollection;
-import com.cumulocity.sdk.client.inventory.PagedManagedObjectCollectionRepresentation;
 import com.cumulocity.model.idtype.GId;
 import com.cumulocity.sdk.client.SDKException;
 
-import cumulocity.microservice.maintenancemodule.model.DeviceAssignment;
+import cumulocity.microservice.maintenancemodule.model.DeviceAssignmentCriteria;
 import cumulocity.microservice.maintenancemodule.model.MaintenancePlan;
 import cumulocity.microservice.maintenancemodule.model.MaintenancePlanCreate;
 import cumulocity.microservice.maintenancemodule.model.MaintenancePlanListResponse;
@@ -214,10 +211,12 @@ public class MaintenancePlanService {
             }
         }
         
-        // Additional validation for triggers if needed
-        if (maintenancePlanCreate.getOn() != null && !maintenancePlanCreate.getOn().isEmpty()) {
-            // TODO: Validate trigger configuration
+        // Additional validation for triggers, at least one trigger must be defined
+        boolean atLeastOneTriggerDefined = (maintenancePlanCreate.getOnTime() != null || maintenancePlanCreate.getOnUsage() != null || !maintenancePlanCreate.getOnConditions().isEmpty());
+        if (!atLeastOneTriggerDefined) {
+            throw new IllegalArgumentException("Maintenance plan validation failed: at least one trigger must be defined");
         }
+
     }
 
     /**
@@ -229,7 +228,7 @@ public class MaintenancePlanService {
      * @throws RuntimeException if plan not found or retrieval fails
      * @since 1.0.0
      */
-    public MaintenancePlan getMaintenancePlan(Integer id) {
+    public MaintenancePlan getMaintenancePlan(String id) {
         if (id == null) {
             throw new IllegalArgumentException("Maintenance plan ID cannot be null");
         }
@@ -237,7 +236,7 @@ public class MaintenancePlanService {
         log.debug("Retrieving maintenance plan with ID: {}", id);
         
         try {
-            ManagedObjectRepresentation managedObject = inventoryApi.get(GId.asGId(id.toString()));
+            ManagedObjectRepresentation managedObject = inventoryApi.get(GId.asGId(id));
             
             if (managedObject == null) {
                 log.warn("Maintenance plan with ID {} not found", id);
@@ -269,7 +268,7 @@ public class MaintenancePlanService {
      * @throws RuntimeException if plan not found or update fails
      * @since 1.0.0
      */
-    public MaintenancePlan updateMaintenancePlan(Integer id, MaintenancePlan maintenancePlan) {
+    public MaintenancePlan updateMaintenancePlan(String id, MaintenancePlan maintenancePlan) {
         if(validateMaintenancePlan(maintenancePlan) == false) {
             return null; // Validation failed, return null
         }
@@ -359,28 +358,13 @@ public class MaintenancePlanService {
             }
         }
         
-        // Additional validation for triggers if needed
-        if (maintenancePlan.getOn() != null && !maintenancePlan.getOn().isEmpty()) {
-            // Validate each trigger in the list
-            for (Object trigger : maintenancePlan.getOn()) {
-                if (trigger == null) {
-                    log.warn("Maintenance plan validation failed: trigger is null");
-                    return false;
-                }
-                // Example: Check for required 'type' property using reflection or interface
-                try {
-                    String type = (String) trigger.getClass().getMethod("getType").invoke(trigger);
-                    if (type == null || type.trim().isEmpty()) {
-                        log.warn("Maintenance plan validation failed: trigger type is missing");
-                        return false;
-                    }
-                } catch (Exception e) {
-                    log.warn("Maintenance plan validation failed: unable to access trigger type", e);
-                    return false;
-                }
-            }
+        // Additional validation for triggers, at least one trigger must be defined
+        boolean atLeastOneTriggerDefined = (maintenancePlan.getOnTime() != null || maintenancePlan.getOnUsage() != null || !maintenancePlan.getOnConditions().isEmpty());
+        if (!atLeastOneTriggerDefined) {
+            log.warn("Maintenance plan validation failed: at least one trigger must be defined");
+            return false;
         }
-        
+
         return true;
     }
 
@@ -394,7 +378,7 @@ public class MaintenancePlanService {
      * @throws RuntimeException if plan not found or update fails
      * @since 1.0.0
      */
-    public DeviceAssignment updateDeviceAssignment(Integer id, DeviceAssignment deviceAssignment) {
+    public DeviceAssignmentCriteria updateDeviceAssignment(String id, DeviceAssignmentCriteria deviceAssignment) {
         if (id == null) {
             throw new IllegalArgumentException("Maintenance plan ID cannot be null");
         }
@@ -435,7 +419,7 @@ public class MaintenancePlanService {
      * @throws RuntimeException if plan not found or retrieval fails
      * @since 1.0.0
      */
-    public DeviceAssignment getDeviceAssignment(Integer id) {
+    public DeviceAssignmentCriteria getDeviceAssignment(String id) {
         if (id == null) {
             throw new IllegalArgumentException("Maintenance plan ID cannot be null");
         }
@@ -448,7 +432,7 @@ public class MaintenancePlanService {
                 throw new RuntimeException("Maintenance plan with ID " + id + " not found");
             }
             
-            DeviceAssignment deviceAssignment = maintenancePlan.getApply();
+            DeviceAssignmentCriteria deviceAssignment = maintenancePlan.getApply();
             
             log.debug("Successfully retrieved device assignment for maintenance plan with ID: {}", id);
             return deviceAssignment;
@@ -467,7 +451,7 @@ public class MaintenancePlanService {
      * @throws RuntimeException if plan not found or update fails
      * @since 1.0.0
      */
-    public void deleteDeviceAssignment(Integer id) {
+    public void deleteDeviceAssignment(String id) {
         if (id == null) {
             throw new IllegalArgumentException("Maintenance plan ID cannot be null");
         }

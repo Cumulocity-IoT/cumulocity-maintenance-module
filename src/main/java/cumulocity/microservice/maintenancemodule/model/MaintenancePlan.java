@@ -28,10 +28,10 @@ import lombok.RequiredArgsConstructor;
 @Validated
 public class MaintenancePlan {
 
-    @Schema(required = true, accessMode = Schema.AccessMode.READ_ONLY, description = "Internal ID, set by Cumulocity", example = "1")
+    @Schema(required = true, accessMode = Schema.AccessMode.READ_ONLY, description = "Internal ID, set by Cumulocity", example = "1234")
     @NotNull
     @NonNull
-    private Integer id;
+    private String id;
 
     @Schema(required = true, description = "The name of the maintenance plan", example = "Monthly Equipment Check")
     @NotNull
@@ -62,13 +62,18 @@ public class MaintenancePlan {
 
     @Schema(description = "Device assignment filter criteria")
     @Valid
-    private DeviceAssignment apply;
+    private DeviceAssignmentCriteria apply;
 
-    @Schema(description = "Simplified time-based maintenance trigger")
+    @Schema(description = "Time-based maintenance trigger definition")
     @Valid
     private TimeBasedTrigger onTime;
 
-    @Schema(description = "List of usage-based maintenance triggers (supports multiple counters)")
+    @Schema(description = "Usage-based maintenance trigger definition")
     @Valid
-    private List<MaintenanceTrigger> on;
+    private UsageBasedTrigger onUsage;
+
+    @Schema(description = "Condition-based maintenance trigger definitions. Conditions are combined using logical AND.")
+    @Valid
+    private List<ConditionBasedTrigger> onConditions;
+
 }

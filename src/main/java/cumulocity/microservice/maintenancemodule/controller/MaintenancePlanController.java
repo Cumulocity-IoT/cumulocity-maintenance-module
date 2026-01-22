@@ -1,30 +1,28 @@
 package cumulocity.microservice.maintenancemodule.controller;
 
-import java.time.LocalDateTime;
-import java.util.Map;
-
 import org.joda.time.DateTime;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import cumulocity.microservice.maintenancemodule.model.DeviceAssignment;
 import cumulocity.microservice.maintenancemodule.model.MaintenancePlan;
 import cumulocity.microservice.maintenancemodule.model.MaintenancePlanCreate;
 import cumulocity.microservice.maintenancemodule.model.MaintenancePlanListResponse;
 import cumulocity.microservice.maintenancemodule.service.MaintenancePlanService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * REST Controller for managing maintenance plans.
@@ -39,21 +37,18 @@ public class MaintenancePlanController {
 
     private final MaintenancePlanService maintenancePlanService;
 
-    @Autowired
     public MaintenancePlanController(MaintenancePlanService maintenancePlanService) {
         this.maintenancePlanService = maintenancePlanService;
     }
 
-    /**
-     * Get all maintenance plans with optional filtering and pagination
-     * 
-     * @param active Filter by active status (optional)
-     * @param startDate Filter plans starting after this date (optional)
-     * @param endDate Filter plans ending before this date (optional)
-     * @param pageSize Maximum number of items to return (default: 20, max: 100)
-     * @param pageNumber Number of items to skip (default: 0)
-     * @return List of maintenance plans with pagination information
-     */
+    @Operation(summary = "Get all maintenance plans with optional filtering and pagination", description = "Returns a list of all maintenance plans in IoT Platform. Additional query parameters allow to filter that list. The default configuration will return all active maintenance plans!", tags = {}, parameters = {
+            @Parameter(in = ParameterIn.QUERY, name = "active", description = "Filter by active status", schema = @Schema(type = "boolean")),
+            @Parameter(in = ParameterIn.QUERY, name = "startDate", description = "Filter plans starting after this date (ISO 8601 format)", schema = @Schema(type = "string", format = "date-time")),
+            @Parameter(in = ParameterIn.QUERY, name = "endDate", description = "Filter plans ending before this date (ISO 8601 format)", schema = @Schema(type = "string", format = "date-time")),
+            @Parameter(in = ParameterIn.QUERY, name = "pageSize", description = "Maximum number of items to return (default: 20, max: 100)", schema = @Schema(type = "integer", defaultValue = "20")),
+            @Parameter(in = ParameterIn.QUERY, name = "pageNumber", description = "Number of items to skip (default: 0)", schema = @Schema(type = "integer", defaultValue = "0")) })
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "OK") })
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<MaintenancePlanListResponse> getAllMaintenancePlans(
             @RequestParam(required = false) Boolean active,
@@ -78,12 +73,10 @@ public class MaintenancePlanController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    /**
-     * Create a new maintenance plan
-     * 
-     * @param maintenancePlanCreate The maintenance plan to create
-     * @return The created maintenance plan with generated ID
-     */
+    @Operation(summary = "Create a new maintenance plan", description = "Creates a new maintenance plan in IoT Platform", tags = {})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Created"),
+            @ApiResponse(responseCode = "400", description = "Bad Request") })
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<MaintenancePlan> createMaintenancePlan(
             @RequestBody MaintenancePlanCreate maintenancePlanCreate) {
@@ -93,14 +86,13 @@ public class MaintenancePlanController {
         return new ResponseEntity<>(createdPlan, HttpStatus.CREATED);
     }
 
-    /**
-     * Get a specific maintenance plan by ID
-     * 
-     * @param id The unique identifier of the maintenance plan
-     * @return The maintenance plan if found
-     */
+    @Operation(summary = "GET maintenance plan by Id", description = "Returns maintenance plan by internal Id", parameters = {
+            @Parameter(in = ParameterIn.PATH, name = "id", required = true, description = "Internal maintenance plan Id", schema = @Schema(type = "string")) })
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "OK"),
+			@ApiResponse(responseCode = "404", description = "Not Found") })
     @GetMapping(path = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<MaintenancePlan> getMaintenancePlan(@PathVariable Integer id) {
+    public ResponseEntity<MaintenancePlan> getMaintenancePlan(@PathVariable String id) {
         
         MaintenancePlan maintenancePlan = maintenancePlanService.getMaintenancePlan(id);
         
@@ -114,15 +106,15 @@ public class MaintenancePlanController {
      * @param maintenancePlan The updated maintenance plan data
      * @return The updated maintenance plan
      */
-    @PutMapping(path = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<MaintenancePlan> updateMaintenancePlan(
-            @PathVariable Integer id,
-            @RequestBody MaintenancePlan maintenancePlan) {
+    // @PutMapping(path = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    // public ResponseEntity<MaintenancePlan> updateMaintenancePlan(
+    //         @PathVariable String id,
+    //         @RequestBody MaintenancePlan maintenancePlan) {
         
-        MaintenancePlan updatedPlan = maintenancePlanService.updateMaintenancePlan(id, maintenancePlan);
+    //     MaintenancePlan updatedPlan = maintenancePlanService.updateMaintenancePlan(id, maintenancePlan);
         
-        return new ResponseEntity<>(updatedPlan, HttpStatus.OK);
-    }
+    //     return new ResponseEntity<>(updatedPlan, HttpStatus.OK);
+    // }
 
     /**
      * Delete an existing maintenance plan by ID
@@ -130,13 +122,13 @@ public class MaintenancePlanController {
      * @param id The unique identifier of the maintenance plan
      * @return Empty response with 204 status
      */
-    @DeleteMapping(path = "/{id}")
-    public ResponseEntity<Void> deleteMaintenancePlan(@PathVariable Integer id) {
+    // @DeleteMapping(path = "/{id}")
+    // public ResponseEntity<Void> deleteMaintenancePlan(@PathVariable String id) {
         
-        maintenancePlanService.deleteMaintenancePlan(id);
+    //     maintenancePlanService.deleteMaintenancePlan(id);
         
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-    }
+    //     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    // }
 
     /**
      * Update device assignment for a maintenance plan
@@ -145,15 +137,15 @@ public class MaintenancePlanController {
      * @param deviceAssignment The device assignment filter criteria
      * @return The updated device assignment
      */
-    @PutMapping(path = "/{id}/apply", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<DeviceAssignment> updateDeviceAssignment(
-            @PathVariable Integer id,
-            @RequestBody DeviceAssignment deviceAssignment) {
+    // @PutMapping(path = "/{id}/apply", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    // public ResponseEntity<DeviceAssignmentCriteria> updateDeviceAssignment(
+    //         @PathVariable String id,
+    //         @RequestBody DeviceAssignmentCriteria deviceAssignment) {
         
-        DeviceAssignment updated = maintenancePlanService.updateDeviceAssignment(id, deviceAssignment);
+    //     DeviceAssignmentCriteria updated = maintenancePlanService.updateDeviceAssignment(id, deviceAssignment);
         
-        return new ResponseEntity<>(updated, HttpStatus.OK);
-    }
+    //     return new ResponseEntity<>(updated, HttpStatus.OK);
+    // }
 
     /**
      * Get device assignment for a maintenance plan
@@ -161,13 +153,13 @@ public class MaintenancePlanController {
      * @param id The unique identifier of the maintenance plan
      * @return The device assignment filter criteria
      */
-    @GetMapping(path = "/{id}/apply", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<DeviceAssignment> getDeviceAssignment(@PathVariable Integer id) {
+    // @GetMapping(path = "/{id}/apply", produces = MediaType.APPLICATION_JSON_VALUE)
+    // public ResponseEntity<DeviceAssignmentCriteria> getDeviceAssignment(@PathVariable String id) {
         
-        DeviceAssignment deviceAssignment = maintenancePlanService.getDeviceAssignment(id);
+    //     DeviceAssignmentCriteria deviceAssignment = maintenancePlanService.getDeviceAssignment(id);
         
-        return new ResponseEntity<>(deviceAssignment, HttpStatus.OK);
-    }
+    //     return new ResponseEntity<>(deviceAssignment, HttpStatus.OK);
+    // }
 
     /**
      * Remove device assignment from a maintenance plan
@@ -175,11 +167,11 @@ public class MaintenancePlanController {
      * @param id The unique identifier of the maintenance plan
      * @return Empty response with 204 status
      */
-    @DeleteMapping(path = "/{id}/apply")
-    public ResponseEntity<Void> deleteDeviceAssignment(@PathVariable Integer id) {
+    // @DeleteMapping(path = "/{id}/apply")
+    // public ResponseEntity<Void> deleteDeviceAssignment(@PathVariable String id) {
         
-        maintenancePlanService.deleteDeviceAssignment(id);
+    //     maintenancePlanService.deleteDeviceAssignment(id);
         
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-    }
+    //     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    // }
 }

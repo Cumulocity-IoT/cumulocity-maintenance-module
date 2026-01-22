@@ -7,3 +7,6 @@
 target/
 *.class
 *.jar
+
+# Open API generated code
+docs/.openapi-generator/

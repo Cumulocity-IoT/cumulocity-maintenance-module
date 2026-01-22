@@ -22,7 +22,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Schema(description = "Device assignment filter criteria. Each filter criteria is optional, however at least one must be provided. If more than one filter criteria is provided, the criterias are combined with OR logic.")
 @Validated
-public class DeviceAssignment {
+public class DeviceAssignmentCriteria {
 
     @Schema(description = "List of device types to filter by (e.g., c8y_Device, c8y_Sensor)", example = "[\"c8y_Device\", \"c8y_Sensor\"]")
     private List<String> types;
@@ -33,6 +33,6 @@ public class DeviceAssignment {
     @Schema(description = "List of serial numbers to filter by", example = "[\"SN123456\", \"356789012345678\"]")
     private List<String> idsSerial;
 
-    @Schema(description = "Cumulocity Query Language (CQL) expression for complex filtering", example = "ec_Service.ec_WindFarmId eq 100117")
+    @Schema(description = "Cumulocity Query Language expression for complex filtering", example = "ec_Service.ec_WindFarmId eq 100117")
     private String query;
 }

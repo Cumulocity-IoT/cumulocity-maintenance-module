@@ -47,13 +47,17 @@ public class MaintenancePlanUpdate {
 
     @Schema(description = "Device assignment filter criteria")
     @Valid
-    private DeviceAssignment apply;
+    private DeviceAssignmentCriteria apply;
 
-    @Schema(description = "Simplified time-based maintenance trigger")
+    @Schema(description = "Time-based maintenance trigger definition")
     @Valid
     private TimeBasedTrigger onTime;
 
-    @Schema(description = "List of usage-based maintenance triggers (supports multiple counters)")
+    @Schema(description = "Usage-based maintenance trigger definition")
     @Valid
-    private List<MaintenanceTrigger> on;
+    private UsageBasedTrigger onUsage;
+
+    @Schema(description = "Condition-based maintenance trigger definitions. Conditions are combined using logical AND.")
+    @Valid
+    private List<ConditionBasedTrigger> onConditions;
 }
