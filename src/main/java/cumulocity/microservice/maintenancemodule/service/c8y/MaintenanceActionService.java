@@ -23,9 +23,9 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 public class MaintenanceActionService {
     
-    private static final String EVENT_TYPE_MAINTENANCE = "mm_MaintenanceActionEvent";
+    private static final String EVENT_TYPE_MAINTENANCE = "c8y_MaintenanceActionEvent";
 
-    private static final String FRAGMENT_STATUS_MAINTENANCE = "mm_MaintenanceActionStatus";
+    private static final String FRAGMENT_STATUS_MAINTENANCE = "ma_Status";
 
     private InventoryApi inventoryApi;
 
@@ -132,7 +132,7 @@ public class MaintenanceActionService {
     private void updateMaintenanceAlarm(String deviceId, CumulocityAlarmStatuses fromStatus, CumulocityAlarmStatuses toStatus) {
         try {
             AlarmFilter alarmFilter = new AlarmFilter();
-            alarmFilter.bySource(GId.asGId(deviceId)).byStatus(fromStatus).byType("mm_MaintenancePlanAlarm");
+            alarmFilter.bySource(GId.asGId(deviceId)).byStatus(fromStatus).byType(MaintenancePlanMapper.ALARM_TYPE);
 
             alarmApi.getAlarmsByFilter(alarmFilter).get(1).forEach(alarm -> {
                 alarm.setStatus(toStatus.name());

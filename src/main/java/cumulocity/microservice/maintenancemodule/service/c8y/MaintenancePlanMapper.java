@@ -1,7 +1,6 @@
 package cumulocity.microservice.maintenancemodule.service.c8y;
 
 import java.util.List;
-import java.util.concurrent.locks.Condition;
 
 import org.joda.time.DateTime;
 
@@ -20,11 +19,13 @@ import cumulocity.microservice.maintenancemodule.model.UsageBasedTrigger;
  * Mapper class for converting between MaintenancePlan domain objects and Cumulocity ManagedObjectRepresentation.
  * Provides functionality to map maintenance plan data to and from Cumulocity IoT Platform format.
  * 
+ * 
  * @author APES
  * @since 1.0.0
  */
 public class MaintenancePlanMapper {
     public static final String MANAGED_OBJECT_TYPE = "c8y_MaintenancePlan";
+    public static final String ALARM_TYPE = "c8y_MaintenancePlanAlarm";
     
     public static final String MP_NAME = "mp_Name";
     public static final String MP_DESCRIPTION = "mp_Description";
