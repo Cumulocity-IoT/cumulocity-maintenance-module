@@ -17,7 +17,7 @@ import cumulocity.microservice.maintenancemodule.model.MaintenancePlan;
 import cumulocity.microservice.maintenancemodule.model.MaintenancePlanCreate;
 import cumulocity.microservice.maintenancemodule.model.MaintenancePlanListResponse;
 import cumulocity.microservice.maintenancemodule.model.MaintenancePlanType;
-import cumulocity.microservice.maintenancemodule.service.MaintenancePlanService;
+import cumulocity.microservice.maintenancemodule.service.c8y.MaintenancePlanService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;

@@ -1,6 +1,5 @@
-package cumulocity.microservice.maintenancemodule.service;
+package cumulocity.microservice.maintenancemodule.service.c8y;
 
-import java.sql.Date;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -25,8 +24,6 @@ import cumulocity.microservice.maintenancemodule.model.MaintenancePlan;
 import cumulocity.microservice.maintenancemodule.model.MaintenancePlanCreate;
 import cumulocity.microservice.maintenancemodule.model.MaintenancePlanListResponse;
 import cumulocity.microservice.maintenancemodule.model.MaintenancePlanType;
-import cumulocity.microservice.maintenancemodule.service.c8y.CustomQueryParam;
-import cumulocity.microservice.maintenancemodule.service.c8y.MaintenancePlanMapper;
 
 /**
  * Service for managing maintenance plans with CRUD operations.

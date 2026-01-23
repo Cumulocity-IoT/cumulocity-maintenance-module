@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import cumulocity.microservice.maintenancemodule.model.MaintenanceAction;
+import cumulocity.microservice.maintenancemodule.service.c8y.MaintenanceActionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -22,7 +23,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 @RequestMapping("/api/maintenance/actions")
 public class MaintenanceActionController {
     
-    public MaintenanceActionController() {
+    private MaintenanceActionService maintenanceActionService;
+
+    public MaintenanceActionController(MaintenanceActionService maintenanceActionService) {
+        this.maintenanceActionService = maintenanceActionService;
     }
 
     @Operation(summary = "Create a new maintenance action", description = "Creates a new maintenance action in IoT Platform", tags = {})
@@ -33,7 +37,10 @@ public class MaintenanceActionController {
     public ResponseEntity<MaintenanceAction> createMaintenanceAction(
             @RequestBody MaintenanceAction maintenanceAction) {
         
-
-        return new ResponseEntity<>(maintenanceAction, HttpStatus.CREATED);
+        MaintenanceAction processedMaintenanceAction = maintenanceActionService.createMaintenanceAction(maintenanceAction);
+        if(processedMaintenanceAction == null) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+        return new ResponseEntity<MaintenanceAction>(processedMaintenanceAction, HttpStatus.CREATED);
     }
 }
