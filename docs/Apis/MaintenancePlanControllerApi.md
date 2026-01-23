@@ -4,9 +4,9 @@ All URIs are relative to *http://localhost:8080*
 
 | Method | HTTP request | Description |
 |------------- | ------------- | -------------|
-| [**createMaintenancePlan**](MaintenancePlanControllerApi.md#createMaintenancePlan) | **POST** /api/maintenance-plans | Create a new maintenance plan |
-| [**getAllMaintenancePlans**](MaintenancePlanControllerApi.md#getAllMaintenancePlans) | **GET** /api/maintenance-plans | Get all maintenance plans with optional filtering and pagination |
-| [**getMaintenancePlan**](MaintenancePlanControllerApi.md#getMaintenancePlan) | **GET** /api/maintenance-plans/{id} | GET maintenance plan by Id |
+| [**createMaintenancePlan**](MaintenancePlanControllerApi.md#createMaintenancePlan) | **POST** /api/maintenance/plans | Create a new maintenance plan |
+| [**getActiveMaintenancePlansByType**](MaintenancePlanControllerApi.md#getActiveMaintenancePlansByType) | **GET** /api/maintenance/plans | Get all active maintenance plans with optional filtering and pagination |
+| [**getMaintenancePlan**](MaintenancePlanControllerApi.md#getMaintenancePlan) | **GET** /api/maintenance/plans/{id} | GET maintenance plan by Id |
 
 
 <a name="createMaintenancePlan"></a>
@@ -36,11 +36,11 @@ Create a new maintenance plan
 - **Content-Type**: application/json
 - **Accept**: application/json
 
-<a name="getAllMaintenancePlans"></a>
-# **getAllMaintenancePlans**
-> MaintenancePlanListResponse getAllMaintenancePlans(active, startDate, endDate, pageSize, pageNumber, arg0, arg1, arg2, arg3, arg4)
+<a name="getActiveMaintenancePlansByType"></a>
+# **getActiveMaintenancePlansByType**
+> MaintenancePlanListResponse getActiveMaintenancePlansByType(type, pageSize, pageNumber)
 
-Get all maintenance plans with optional filtering and pagination
+Get all active maintenance plans with optional filtering and pagination
 
     Returns a list of all maintenance plans in IoT Platform. Additional query parameters allow to filter that list. The default configuration will return all active maintenance plans!
 
@@ -48,16 +48,9 @@ Get all maintenance plans with optional filtering and pagination
 
 |Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
-| **active** | **Boolean**| Filter by active status | [optional] [default to null] |
-| **startDate** | **Date**| Filter plans starting after this date (ISO 8601 format) | [optional] [default to null] |
-| **endDate** | **Date**| Filter plans ending before this date (ISO 8601 format) | [optional] [default to null] |
+| **type** | **String**| Maintenance plan type | [optional] [default to null] |
 | **pageSize** | **Integer**| Maximum number of items to return (default: 20, max: 100) | [optional] [default to 20] |
 | **pageNumber** | **Integer**| Number of items to skip (default: 0) | [optional] [default to 0] |
-| **arg0** | **Boolean**|  | [optional] [default to null] |
-| **arg1** | **Date**|  | [optional] [default to null] |
-| **arg2** | **Date**|  | [optional] [default to null] |
-| **arg3** | **Integer**|  | [optional] [default to 20] |
-| **arg4** | **Integer**|  | [optional] [default to 0] |
 
 ### Return type
 

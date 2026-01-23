@@ -7,9 +7,10 @@ All URIs are relative to *http://localhost:8080*
 
 | Class | Method | HTTP request | Description |
 |------------ | ------------- | ------------- | -------------|
-| *MaintenancePlanControllerApi* | [**createMaintenancePlan**](Apis/MaintenancePlanControllerApi.md#createmaintenanceplan) | **POST** /api/maintenance-plans | Create a new maintenance plan |
-*MaintenancePlanControllerApi* | [**getAllMaintenancePlans**](Apis/MaintenancePlanControllerApi.md#getallmaintenanceplans) | **GET** /api/maintenance-plans | Get all maintenance plans with optional filtering and pagination |
-*MaintenancePlanControllerApi* | [**getMaintenancePlan**](Apis/MaintenancePlanControllerApi.md#getmaintenanceplan) | **GET** /api/maintenance-plans/{id} | GET maintenance plan by Id |
+| *MaintenanceActionControllerApi* | [**createMaintenanceAction**](Apis/MaintenanceActionControllerApi.md#createmaintenanceaction) | **POST** /api/maintenance/actions | Create a new maintenance action |
+| *MaintenancePlanControllerApi* | [**createMaintenancePlan**](Apis/MaintenancePlanControllerApi.md#createmaintenanceplan) | **POST** /api/maintenance/plans | Create a new maintenance plan |
+*MaintenancePlanControllerApi* | [**getActiveMaintenancePlansByType**](Apis/MaintenancePlanControllerApi.md#getactivemaintenanceplansbytype) | **GET** /api/maintenance/plans | Get all active maintenance plans with optional filtering and pagination |
+*MaintenancePlanControllerApi* | [**getMaintenancePlan**](Apis/MaintenancePlanControllerApi.md#getmaintenanceplan) | **GET** /api/maintenance/plans/{id} | GET maintenance plan by Id |
 
 
 <a name="documentation-for-models"></a>
@@ -17,6 +18,7 @@ All URIs are relative to *http://localhost:8080*
 
  - [ConditionBasedTrigger](./Models/ConditionBasedTrigger.md)
  - [DeviceAssignmentCriteria](./Models/DeviceAssignmentCriteria.md)
+ - [MaintenanceAction](./Models/MaintenanceAction.md)
  - [MaintenanceCondition](./Models/MaintenanceCondition.md)
  - [MaintenancePlan](./Models/MaintenancePlan.md)
  - [MaintenancePlanCreate](./Models/MaintenancePlanCreate.md)

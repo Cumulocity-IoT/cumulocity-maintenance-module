@@ -43,9 +43,7 @@ public class MaintenancePlanListResponse {
     @NonNull
     private Integer pageSize;
 
-    @Schema(required = true, description = "Total number of pages", example = "5")
-    @NotNull
-    @NonNull
+    @Schema(required = false, description = "Total number of pages", example = "5")
     private Integer totalPages;
 
     @Schema(description = "Total number of elements across all pages", example = "42")

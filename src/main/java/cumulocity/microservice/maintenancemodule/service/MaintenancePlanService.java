@@ -1,5 +1,6 @@
 package cumulocity.microservice.maintenancemodule.service;
 
+import java.sql.Date;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -9,17 +10,22 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import com.cumulocity.rest.representation.PageStatisticsRepresentation;
 import com.cumulocity.rest.representation.inventory.ManagedObjectRepresentation;
 import com.cumulocity.sdk.client.inventory.InventoryApi;
 import com.cumulocity.sdk.client.inventory.InventoryFilter;
 import com.cumulocity.sdk.client.inventory.ManagedObjectCollection;
+import com.cumulocity.sdk.client.inventory.PagedManagedObjectCollectionRepresentation;
 import com.cumulocity.model.idtype.GId;
+import com.cumulocity.sdk.client.QueryParam;
 import com.cumulocity.sdk.client.SDKException;
 
 import cumulocity.microservice.maintenancemodule.model.DeviceAssignmentCriteria;
 import cumulocity.microservice.maintenancemodule.model.MaintenancePlan;
 import cumulocity.microservice.maintenancemodule.model.MaintenancePlanCreate;
 import cumulocity.microservice.maintenancemodule.model.MaintenancePlanListResponse;
+import cumulocity.microservice.maintenancemodule.model.MaintenancePlanType;
+import cumulocity.microservice.maintenancemodule.service.c8y.CustomQueryParam;
 import cumulocity.microservice.maintenancemodule.service.c8y.MaintenancePlanMapper;
 
 /**
@@ -38,6 +44,69 @@ public class MaintenancePlanService {
 
     public MaintenancePlanService(InventoryApi inventoryApi) {
         this.inventoryApi = inventoryApi;
+    }
+
+    public MaintenancePlanListResponse getActiveMaintenancePlansByType(MaintenancePlanType maintenancePlanType, Integer pageSize, Integer pageNumber) {
+        //TODO check if we need also to check start and end date with current date, DateTime now = new DateTime();
+        QueryParam maintenancePlanTypeQuery = null;
+        if(maintenancePlanType == null) {
+            maintenancePlanTypeQuery = CustomQueryParam.QUERY.setValue(MaintenancePlanMapper.MP_ACTIVE + " eq true").toQueryParam();
+        }else {
+            maintenancePlanTypeQuery = CustomQueryParam.QUERY.setValue("has("+ MaintenancePlanMapper.MP_ON_TIME + ") and " + MaintenancePlanMapper.MP_ACTIVE + " eq true").toQueryParam();
+        }
+        
+        PagedManagedObjectCollectionRepresentation managedObjects = inventoryApi.getManagedObjects().get(pageSize, maintenancePlanTypeQuery);
+         
+        List<MaintenancePlan> allMaintenancePlans = new ArrayList<>();
+        for (ManagedObjectRepresentation managedObject : managedObjects.getManagedObjects()) {
+            MaintenancePlan maintenancePlan = MaintenancePlanMapper.map2(managedObject);
+            if (maintenancePlan != null) {
+                allMaintenancePlans.add(maintenancePlan);
+            }
+        }
+        PageStatisticsRepresentation pageStatistics = managedObjects.getPageStatistics();
+
+
+        MaintenancePlanListResponse response = new MaintenancePlanListResponse();
+        response.setMaintenancePlans(allMaintenancePlans);
+        response.setCurrentPage(pageStatistics.getCurrentPage());
+        response.setPageSize(pageStatistics.getPageSize());
+        response.setTotalPages(pageStatistics.getTotalPages());
+        response.setTotalElements(pageStatistics.getTotalElements());
+
+        return response;
+    }
+
+    /**
+     * Creates a new maintenance plan in the Cumulocity IoT Platform.
+     * 
+     * @param maintenancePlanCreate The maintenance plan configuration to create
+     * @return The created maintenance plan with assigned ID
+     * @throws IllegalArgumentException if maintenancePlanCreate is null or invalid
+     * @throws RuntimeException if creation fails in Cumulocity
+     * @since 1.0.0
+     */
+    public MaintenancePlan createMaintenancePlan(MaintenancePlanCreate maintenancePlanCreate) {
+        // Validate input data
+        if (maintenancePlanCreate == null) {
+            throw new IllegalArgumentException("MaintenancePlanCreate cannot be null");
+        }
+        validateMaintenancePlanCreate(maintenancePlanCreate);
+        
+        // Create mapper and convert to ManagedObjectRepresentation
+        MaintenancePlanMapper mapper = MaintenancePlanMapper.map2(maintenancePlanCreate);
+        ManagedObjectRepresentation managedObject = mapper.getManagedObject();
+        
+        try {
+            // Store in Cumulocity inventory
+            ManagedObjectRepresentation createdObject = inventoryApi.create(managedObject);
+            
+            // Convert back to MaintenancePlan using mapper
+            return MaintenancePlanMapper.map2(createdObject);
+            
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to create maintenance plan in Cumulocity: " + e.getMessage(), e);
+        }
     }
 
     /**
@@ -160,38 +229,6 @@ public class MaintenancePlanService {
         }
         
         return true;
-    }
-
-    /**
-     * Creates a new maintenance plan in the Cumulocity IoT Platform.
-     * 
-     * @param maintenancePlanCreate The maintenance plan configuration to create
-     * @return The created maintenance plan with assigned ID
-     * @throws IllegalArgumentException if maintenancePlanCreate is null or invalid
-     * @throws RuntimeException if creation fails in Cumulocity
-     * @since 1.0.0
-     */
-    public MaintenancePlan createMaintenancePlan(MaintenancePlanCreate maintenancePlanCreate) {
-        // Validate input data
-        if (maintenancePlanCreate == null) {
-            throw new IllegalArgumentException("MaintenancePlanCreate cannot be null");
-        }
-        validateMaintenancePlanCreate(maintenancePlanCreate);
-        
-        // Create mapper and convert to ManagedObjectRepresentation
-        MaintenancePlanMapper mapper = MaintenancePlanMapper.map2(maintenancePlanCreate);
-        ManagedObjectRepresentation managedObject = mapper.getManagedObject();
-        
-        try {
-            // Store in Cumulocity inventory
-            ManagedObjectRepresentation createdObject = inventoryApi.create(managedObject);
-            
-            // Convert back to MaintenancePlan using mapper
-            return MaintenancePlanMapper.map2(createdObject);
-            
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to create maintenance plan in Cumulocity: " + e.getMessage(), e);
-        }
     }
     
     /**

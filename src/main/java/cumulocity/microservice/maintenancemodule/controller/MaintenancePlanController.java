@@ -16,12 +16,14 @@ import org.springframework.web.bind.annotation.RestController;
 import cumulocity.microservice.maintenancemodule.model.MaintenancePlan;
 import cumulocity.microservice.maintenancemodule.model.MaintenancePlanCreate;
 import cumulocity.microservice.maintenancemodule.model.MaintenancePlanListResponse;
+import cumulocity.microservice.maintenancemodule.model.MaintenancePlanType;
 import cumulocity.microservice.maintenancemodule.service.MaintenancePlanService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import lombok.extern.slf4j.Slf4j;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
@@ -31,8 +33,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
  * 
  * @author APES
  */
+@Slf4j
 @RestController
-@RequestMapping("/api/maintenance-plans")
+@RequestMapping("/api/maintenance/plans")
 public class MaintenancePlanController {
 
     private final MaintenancePlanService maintenancePlanService;
@@ -41,34 +44,18 @@ public class MaintenancePlanController {
         this.maintenancePlanService = maintenancePlanService;
     }
 
-    @Operation(summary = "Get all maintenance plans with optional filtering and pagination", description = "Returns a list of all maintenance plans in IoT Platform. Additional query parameters allow to filter that list. The default configuration will return all active maintenance plans!", tags = {}, parameters = {
-            @Parameter(in = ParameterIn.QUERY, name = "active", description = "Filter by active status", schema = @Schema(type = "boolean")),
-            @Parameter(in = ParameterIn.QUERY, name = "startDate", description = "Filter plans starting after this date (ISO 8601 format)", schema = @Schema(type = "string", format = "date-time")),
-            @Parameter(in = ParameterIn.QUERY, name = "endDate", description = "Filter plans ending before this date (ISO 8601 format)", schema = @Schema(type = "string", format = "date-time")),
+    
+    @Operation(summary = "Get all active maintenance plans with optional filtering and pagination", description = "Returns a list of all maintenance plans in IoT Platform. Additional query parameters allow to filter that list. The default configuration will return all active maintenance plans!", tags = {}, parameters = {
+            @Parameter(in = ParameterIn.QUERY, name = "type", description = "Maintenance plan type", schema = @Schema(type = "string")),
             @Parameter(in = ParameterIn.QUERY, name = "pageSize", description = "Maximum number of items to return (default: 20, max: 100)", schema = @Schema(type = "integer", defaultValue = "20")),
             @Parameter(in = ParameterIn.QUERY, name = "pageNumber", description = "Number of items to skip (default: 0)", schema = @Schema(type = "integer", defaultValue = "0")) })
-	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "OK") })
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<MaintenancePlanListResponse> getAllMaintenancePlans(
-            @RequestParam(required = false) Boolean active,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime startDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime endDate,
-            @RequestParam(defaultValue = "20") Integer pageSize,
-            @RequestParam(defaultValue = "0") Integer pageNumber) {
-        
-        // Validate limit parameter
-        if (pageSize < 1) {
-            pageSize = 1; // Reset to default if invalid
-        }
-        
-        // Validate offset parameter
-        if (pageNumber < 0) {
-            pageNumber = 0; // Reset to default if invalid
-        }
+    public ResponseEntity<MaintenancePlanListResponse> getActiveMaintenancePlansByType() {
+        log.info("Get active maintenance plans by type" + MaintenancePlanType.TIME_BASED);
 
-        MaintenancePlanListResponse response = maintenancePlanService.getAllMaintenancePlans(
-                active, startDate, endDate, pageSize, pageNumber, false);
+
+        MaintenancePlanListResponse response = maintenancePlanService.getActiveMaintenancePlansByType(
+                MaintenancePlanType.TIME_BASED, 20, 0);
         
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
@@ -78,8 +65,7 @@ public class MaintenancePlanController {
             @ApiResponse(responseCode = "201", description = "Created"),
             @ApiResponse(responseCode = "400", description = "Bad Request") })
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<MaintenancePlan> createMaintenancePlan(
-            @RequestBody MaintenancePlanCreate maintenancePlanCreate) {
+    public ResponseEntity<MaintenancePlan> createMaintenancePlan(@RequestBody MaintenancePlanCreate maintenancePlanCreate) {
         
         MaintenancePlan createdPlan = maintenancePlanService.createMaintenancePlan(maintenancePlanCreate);
         
