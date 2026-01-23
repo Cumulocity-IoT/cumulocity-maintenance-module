@@ -74,6 +74,20 @@ public class MaintenancePlanService {
         return response;
     }
 
+    public List<MaintenancePlan> getActiveTimeBasedMaintenancePlans() {
+        QueryParam maintenancePlanTypeQuery = CustomQueryParam.QUERY.setValue("has("+ MaintenancePlanMapper.MP_ON_TIME + ") and " + MaintenancePlanMapper.MP_ACTIVE + " eq true").toQueryParam();
+        
+        List<MaintenancePlan> maintenancePlans = new ArrayList<>();
+        Iterable<ManagedObjectRepresentation> allPages = inventoryApi.getManagedObjects().get(2000, maintenancePlanTypeQuery).allPages();
+        for (ManagedObjectRepresentation managedObject : allPages) {
+            MaintenancePlan maintenancePlan = MaintenancePlanMapper.map2(managedObject);
+            if (maintenancePlan != null) {
+                maintenancePlans.add(maintenancePlan);
+            }
+        }
+        return maintenancePlans;
+    }
+
     /**
      * Creates a new maintenance plan in the Cumulocity IoT Platform.
      * 

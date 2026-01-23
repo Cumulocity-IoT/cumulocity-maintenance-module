@@ -71,11 +71,16 @@ sequenceDiagram
         C8Y-->>Service: Return device list
 
         loop For each device
-        Service->>Service: Calculate next maintenance time<br/>(device.lastMaintenance + maintenancePlan.interval)
+        Service->>Service: Get last successful maintenance timestamp
+        alt No last maintenance timestamp
+            Service->>Service: Calculate next maintenance time<br/>(device.creationTime + maintenancePlan.interval)
+        else
+            Service->>Service: Calculate next maintenance time<br/>(device.mm_LastMaintenance + maintenancePlan.interval)
+        end
         
         alt Maintenance is due (currentTime >= nextMaintenance)
             alt Device not in maintenance
-              Service->>C8Y: Create maintenance alarm for device
+              Service->>C8Y: Create maintenance alarm for device with amount of over due time
             end
         else Maintenance not yet due
             alt Next maintenance time changed
