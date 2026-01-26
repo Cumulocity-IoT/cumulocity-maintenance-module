@@ -1,0 +1,47 @@
+{
+  "type": "object",
+  "properties": {
+    "planId": {
+      "type": "string",
+      "description": "A unique identifier for the proposed plan (e.g., a UUID)."
+    },
+    "equipmentId": {
+      "type": "string",
+      "description": "The identifier of the equipment or asset the plan applies to."
+    },
+    "description": {
+      "type": "string",
+      "description": "A brief, descriptive title for the maintenance plan."
+    },
+    "frequency": {
+      "type": "string",
+      "enum": ["DAILY", "WEEKLY", "MONTHLY", "QUARTERLY", "ANNUALLY", "AS_NEEDED"],
+      "description": "How often the maintenance should be performed."
+    },
+    "tasks": {
+      "type": "array",
+      "description": "A list of individual maintenance actions.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "taskName": {
+            "type": "string"
+          },
+          "instructions": {
+            "type": "string"
+          },
+          "estimatedDurationHours": {
+            "type": "number"
+          }
+        },
+        "required": ["taskName", "instructions"]
+      }
+    },
+    "requiredSkills": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "List of required technician skills (e.g., Electrical, Mechanical)."
+    }
+  },
+  "required": ["planId", "equipmentId", "description", "frequency", "tasks"]
+}
