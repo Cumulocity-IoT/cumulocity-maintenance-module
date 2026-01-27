@@ -17,6 +17,7 @@ import com.cumulocity.sdk.client.inventory.InventoryApi;
 
 import c8y.RequiredAvailability;
 import cumulocity.microservice.maintenancemodule.model.MaintenanceAction;
+import cumulocity.microservice.maintenancemodule.model.MaintenanceAction.MaintenanceStatus;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -68,21 +69,21 @@ public class MaintenanceActionService {
 
     private MaintenanceAction createInProgressAction(MaintenanceAction maintenanceAction) {
         createEvent(maintenanceAction);
-        updateMaintenanceMode(maintenanceAction.getDeviceId(), true);
+        updateMaintenanceMode(maintenanceAction.getDeviceId(), maintenanceAction.getStatus());
         updateMaintenanceAlarm(maintenanceAction.getDeviceId(), CumulocityAlarmStatuses.ACKNOWLEDGED, CumulocityAlarmStatuses.ACKNOWLEDGED);
         return maintenanceAction;
     }
 
     private MaintenanceAction createCompletedAction(MaintenanceAction maintenanceAction) {
         createEvent(maintenanceAction);
-        updateMaintenanceMode(maintenanceAction.getDeviceId(), false);
+        updateMaintenanceMode(maintenanceAction.getDeviceId(), maintenanceAction.getStatus());
         updateMaintenanceAlarm(maintenanceAction.getDeviceId(), CumulocityAlarmStatuses.ACKNOWLEDGED, CumulocityAlarmStatuses.CLEARED);
         return maintenanceAction;
     }
 
     private MaintenanceAction createCancelledAction(MaintenanceAction maintenanceAction) {
         createEvent(maintenanceAction);
-        updateMaintenanceMode(maintenanceAction.getDeviceId(), false);
+        updateMaintenanceMode(maintenanceAction.getDeviceId(), maintenanceAction.getStatus());
         updateMaintenanceAlarm(maintenanceAction.getDeviceId(), CumulocityAlarmStatuses.ACKNOWLEDGED, CumulocityAlarmStatuses.ACTIVE);
         return maintenanceAction;
     }
@@ -105,7 +106,7 @@ public class MaintenanceActionService {
         }
     }
 
-    private void updateMaintenanceMode(String deviceId, boolean maintenanceMode) {
+    private void updateMaintenanceMode(String deviceId, MaintenanceStatus status) {
         try {
             ManagedObjectRepresentation currentDevice = inventoryApi.get(GId.asGId(deviceId)); 
             RequiredAvailability currentRequiredAvailability = currentDevice.get(RequiredAvailability.class);
@@ -117,10 +118,13 @@ public class MaintenanceActionService {
             ManagedObjectRepresentation device = new ManagedObjectRepresentation();
             device.setId(new GId(deviceId));
             RequiredAvailability availability = new RequiredAvailability();
-            if(maintenanceMode) {
+            if(MaintenanceStatus.IN_PROGRESS.equals(status)) {
                 availability.setResponseInterval(-Math.abs(currentResponseInterval));
             } else {
                 availability.setResponseInterval(Math.abs(currentResponseInterval));
+            }
+            if(MaintenanceStatus.COMPLETED.equals(status)) {
+                device.set(new DateTime(), MaintenancePlanMapper.DEVICE_LAST_MAINTENANCE);
             }
             device.set(availability);
             inventoryApi.update(device);

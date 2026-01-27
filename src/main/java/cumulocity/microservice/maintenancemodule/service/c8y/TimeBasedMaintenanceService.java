@@ -1,12 +1,16 @@
 package cumulocity.microservice.maintenancemodule.service.c8y;
 
 import java.lang.reflect.Array;
+import java.sql.Date;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
+import org.joda.time.DateTime;
+import org.joda.time.Period;
+import org.joda.time.format.ISOPeriodFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,7 +19,9 @@ import org.springframework.stereotype.Service;
 import com.cumulocity.microservice.context.ContextService;
 import com.cumulocity.microservice.context.credentials.MicroserviceCredentials;
 import com.cumulocity.model.idtype.GId;
+import com.cumulocity.rest.representation.alarm.AlarmRepresentation;
 import com.cumulocity.rest.representation.inventory.ManagedObjectRepresentation;
+import com.cumulocity.sdk.client.alarm.AlarmApi;
 import com.cumulocity.sdk.client.inventory.InventoryApi;
 import com.cumulocity.sdk.client.inventory.ManagedObject;
 
@@ -32,11 +38,14 @@ public class TimeBasedMaintenanceService {
 
     private final InventoryApi inventoryApi;
 
+    private final AlarmApi alarmApi;
+
     @Autowired
-    public TimeBasedMaintenanceService(ContextService<MicroserviceCredentials> contextService, MaintenancePlanService maintenancePlanService, InventoryApi inventoryApi) {
+    public TimeBasedMaintenanceService(ContextService<MicroserviceCredentials> contextService, MaintenancePlanService maintenancePlanService, InventoryApi inventoryApi, AlarmApi alarmApi) {
         this.contextService = contextService;
         this.maintenancePlanService = maintenancePlanService;
         this.inventoryApi = inventoryApi;
+        this.alarmApi = alarmApi;
     }
 
     public Boolean runJobWithinContext(MicroserviceCredentials context) {
@@ -95,16 +104,80 @@ public class TimeBasedMaintenanceService {
     }
 
     private void checkAndCreateMaintenanceAlarm(ManagedObjectRepresentation device, MaintenancePlan maintenancePlan) {
-        //TODO load last maintenance timestamp
-        //device.get("mm_LastMaintenance");
-        //TODO if not set load device creation time
-        //device.getCreationTime();
-        //TODO load inteval from maintenance plan
+        //load last maintenance timestamp
+        DateTime lastMaintenance = null;
+        
+        try {
+            Object lastMaintenanceObj = device.get(MaintenancePlanMapper.DEVICE_LAST_MAINTENANCE);
+            if (lastMaintenanceObj instanceof DateTime) {
+                lastMaintenance = (DateTime) lastMaintenanceObj;
+            }
+        } catch (Exception e) {
+            log.warn("Could not retrieve last maintenance time for device {}", device.getId().getValue());
+        }
+
+        //if not set load device creation time
+        if(lastMaintenance == null) {
+            log.info("No last maintenance timestamp found for device {}, using creation time", device.getId().getValue());
+            lastMaintenance = device.getCreationDateTime();
+        }
+        
+        //load inteval from maintenance plan
+        String interval = maintenancePlan.getOnTime().getInterval();
+        log.info("Calculating next maintenance time for device {} with last maintenance at {} and interval {}",
+                device.getId().getValue(), lastMaintenance.toString(), interval);
+        
+        // Parse ISO 8601 duration and calculate next maintenance
+        Period period = ISOPeriodFormat.standard().parsePeriod(interval);
+        DateTime nextMaintenance = lastMaintenance.plus(period);
+        log.info("Next maintenance for device {} is scheduled at {}", device.getId().getValue(), nextMaintenance.toString());
+
         //maintenancePlan.getOnTime().getInterval();
-        //TODO calculate next maintenance time with all this data
-        //TODO chekck if maintenance is due
-        //TODO create maintenance alarm if due
-        //TODO set next maintenance time in device fragment if it has changed
+
+        //check if maintenance is due and create alarm if needed
+        DateTime currentTime = new DateTime();
+        if(currentTime.isAfter(nextMaintenance) || currentTime.isEqual(nextMaintenance)) {
+            log.info("Maintenance is DUE for device {}", device.getId().getValue());
+            if("alarm".equals(maintenancePlan.getNotificationType())) {
+                createAlarmNotification(device, maintenancePlan, nextMaintenance);
+            }
+        } else {
+            log.info("Maintenance is NOT yet due for device {}", device.getId().getValue());
+        }
+
+        //set next maintenance time in device fragment if it has changed
+        DateTime orginNextMaintenance = null;
+        
+        try {
+            Object orginNextMaintenanceObj = device.get(MaintenancePlanMapper.DEVICE_NEXT_MAINTENANCE);
+            if (orginNextMaintenanceObj instanceof DateTime) {
+                orginNextMaintenance = (DateTime) orginNextMaintenanceObj;
+            }
+        } catch (Exception e) {
+            log.warn("Could not retrieve last maintenance time for device {}", device.getId().getValue());
+        }
+        if(orginNextMaintenance == null || !orginNextMaintenance.isEqual(nextMaintenance)) {
+            log.info("Updating next maintenance time for device {} to {}", device.getId().getValue(), nextMaintenance.toString());
+            ManagedObjectRepresentation deviceUpdate = new ManagedObjectRepresentation();
+            deviceUpdate.setId(device.getId());
+            deviceUpdate.set(nextMaintenance, MaintenancePlanMapper.DEVICE_NEXT_MAINTENANCE);
+            try {
+                inventoryApi.update(deviceUpdate);
+            } catch (Exception e) {
+                log.error("Could not update next maintenance time for device {}", device.getId().getValue(), e);
+            }
+        }
+    }
+
+    private AlarmRepresentation createAlarmNotification(ManagedObjectRepresentation device, MaintenancePlan maintenancePlan, DateTime nextMaintenance) {
+        AlarmRepresentation alarm = new AlarmRepresentation();
+        alarm.setSource(device);
+        alarm.setType(MaintenancePlanMapper.ALARM_TYPE);
+        alarm.setStatus("ACTIVE");
+        alarm.setSeverity("MAJOR");
+        alarm.setText("Maintenance is due, planned maintenance: " + nextMaintenance + " as per maintenance plan " + maintenancePlan.getName());
+        alarm.setDateTime(new DateTime());
+        return alarmApi.create(alarm);
     }
 
 }

@@ -26,6 +26,8 @@ import cumulocity.microservice.maintenancemodule.model.UsageBasedTrigger;
 public class MaintenancePlanMapper {
     public static final String MANAGED_OBJECT_TYPE = "c8y_MaintenancePlan";
     public static final String ALARM_TYPE = "c8y_MaintenancePlanAlarm";
+    public static final String DEVICE_LAST_MAINTENANCE = "mp_LastMaintenance";
+    public static final String DEVICE_NEXT_MAINTENANCE = "mp_NextMaintenance";
     
     public static final String MP_NAME = "mp_Name";
     public static final String MP_DESCRIPTION = "mp_Description";
