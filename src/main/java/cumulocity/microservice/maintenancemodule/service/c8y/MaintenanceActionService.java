@@ -110,24 +110,32 @@ public class MaintenanceActionService {
         try {
             ManagedObjectRepresentation currentDevice = inventoryApi.get(GId.asGId(deviceId)); 
             RequiredAvailability currentRequiredAvailability = currentDevice.get(RequiredAvailability.class);
-            if(currentRequiredAvailability == null) {
-                log.warn("Device does not have RequiredAvailability fragment, cannot update maintenance mode for device: {}", deviceId);
-                return;
-            }
-            int currentResponseInterval = currentRequiredAvailability.getResponseInterval();
             ManagedObjectRepresentation device = new ManagedObjectRepresentation();
             device.setId(new GId(deviceId));
-            RequiredAvailability availability = new RequiredAvailability();
-            if(MaintenanceStatus.IN_PROGRESS.equals(status)) {
-                availability.setResponseInterval(-Math.abs(currentResponseInterval));
-            } else {
-                availability.setResponseInterval(Math.abs(currentResponseInterval));
+            boolean needUpdate = false;
+
+            if(currentRequiredAvailability != null) {
+                log.warn("Device does not have RequiredAvailability fragment, cannot update maintenance mode for device: {}", deviceId);
+                int currentResponseInterval = currentRequiredAvailability.getResponseInterval();
+                RequiredAvailability availability = new RequiredAvailability();
+                if(MaintenanceStatus.IN_PROGRESS.equals(status)) {
+                    availability.setResponseInterval(-Math.abs(currentResponseInterval));
+                } else {
+                    availability.setResponseInterval(Math.abs(currentResponseInterval));
+                }
+                device.set(availability);
+                needUpdate = true;
             }
+
             if(MaintenanceStatus.COMPLETED.equals(status)) {
+                log.info("Setting last maintenance date for device: {}", deviceId);
                 device.set(new DateTime(), MaintenancePlanMapper.DEVICE_LAST_MAINTENANCE);
+                needUpdate = true;
             }
-            device.set(availability);
-            inventoryApi.update(device);
+
+            if(needUpdate) {
+                inventoryApi.update(device);
+            }
         } catch (SDKException e) {
             log.error("Error updating maintenance mode for device: {}", deviceId, e);
         }
@@ -138,7 +146,7 @@ public class MaintenanceActionService {
             AlarmFilter alarmFilter = new AlarmFilter();
             alarmFilter.bySource(GId.asGId(deviceId)).byStatus(fromStatus).byType(MaintenancePlanMapper.ALARM_TYPE);
 
-            alarmApi.getAlarmsByFilter(alarmFilter).get(1).forEach(alarm -> {
+            alarmApi.getAlarmsByFilter(alarmFilter).get(20).forEach(alarm -> {
                 alarm.setStatus(toStatus.name());
                 alarmApi.update(alarm);
             });

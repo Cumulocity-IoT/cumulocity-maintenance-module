@@ -27,6 +27,7 @@ import com.cumulocity.sdk.client.inventory.ManagedObject;
 
 import cumulocity.microservice.maintenancemodule.model.DeviceAssignmentCriteria;
 import cumulocity.microservice.maintenancemodule.model.MaintenancePlan;
+import lombok.NonNull;
 
 @Service
 public class TimeBasedMaintenanceService {
@@ -52,18 +53,23 @@ public class TimeBasedMaintenanceService {
         Boolean callWithinContext = contextService.callWithinContext(context, (Callable<Boolean>) () -> {
             try {
                 log.info("Start time-based maintenance job for tenant {}", context.getTenant());
-                List<MaintenancePlan> maintenancePlans = maintenancePlanService.getActiveTimeBasedMaintenancePlans();
+                List<MaintenancePlan> maintenancePlans = maintenancePlanService.getAllTimeBasedMaintenancePlans();
                 log.info("Found {} active time-based maintenance plans", maintenancePlans.size());
                 for (MaintenancePlan maintenancePlan : maintenancePlans) {
+                    MaintenancePlan maintenancePlanUpdated = checkAndUpdateActivateFlag(maintenancePlan);
+                    if(maintenancePlanUpdated.getActive() == null || !maintenancePlanUpdated.getActive()) {
+                        log.info("Skipping inactive maintenance plan {}", maintenancePlan.getName());
+                        continue;
+                    }
                     Set<ManagedObjectRepresentation> devices = new HashSet<>();
-                    DeviceAssignmentCriteria applyCriteria = maintenancePlan.getApply();
+                    DeviceAssignmentCriteria applyCriteria = maintenancePlanUpdated.getApply();
                     devices.addAll(getDevicesByIds(applyCriteria.getIdsInternal()));
                     devices.addAll(getDevicesBySerial(applyCriteria.getIdsSerial()));
                     devices.addAll(getDevicesByType(applyCriteria.getTypes()));
                     devices.addAll(getDevicesByQuery(applyCriteria.getQuery()));
-                    log.info("Maintenance plan {} applies to {} devices", maintenancePlan.getName(), devices.size());
+                    log.info("Maintenance plan {} applies to {} devices", maintenancePlanUpdated.getName(), devices.size());
                     for (ManagedObjectRepresentation device : devices) {
-                        checkAndCreateMaintenanceAlarm(device, maintenancePlan);
+                        checkAndCreateMaintenanceAlarm(device, maintenancePlanUpdated);
                     }
                 }
                 log.info("time-based maintenance devices processed");
@@ -74,6 +80,24 @@ public class TimeBasedMaintenanceService {
             return Boolean.FALSE;
         });
         return callWithinContext;
+    }
+
+    private MaintenancePlan checkAndUpdateActivateFlag(MaintenancePlan maintenancePlan) {
+        DateTime startDate = maintenancePlan.getStartDate();
+        DateTime endDate = maintenancePlan.getEndDate();
+        Boolean currentActivate = maintenancePlan.getActive();
+        if(startDate == null && endDate == null) {
+            return maintenancePlan;
+        }
+
+        DateTime currentDate = new DateTime();
+        Boolean newActive = startDate != null && currentDate.isAfter(startDate) || endDate != null && currentDate.isBefore(endDate);
+        if(currentActivate == null || !currentActivate.equals(newActive)) {
+            log.info("Updating maintenance plan {} activate flag from {} to {}", maintenancePlan.getName(), currentActivate, newActive);
+            return maintenancePlanService.updatActivateFlag(maintenancePlan.getId(), newActive);
+        }
+
+        return maintenancePlan;
     }
 
     private List<ManagedObjectRepresentation> getDevicesByIds(List<String> deviceIds) {
@@ -109,8 +133,8 @@ public class TimeBasedMaintenanceService {
         
         try {
             Object lastMaintenanceObj = device.get(MaintenancePlanMapper.DEVICE_LAST_MAINTENANCE);
-            if (lastMaintenanceObj instanceof DateTime) {
-                lastMaintenance = (DateTime) lastMaintenanceObj;
+            if (lastMaintenanceObj instanceof String) {
+                lastMaintenance = DateTime.parse((String) lastMaintenanceObj);
             }
         } catch (Exception e) {
             log.warn("Could not retrieve last maintenance time for device {}", device.getId().getValue());

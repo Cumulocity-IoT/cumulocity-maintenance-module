@@ -88,6 +88,20 @@ public class MaintenancePlanService {
         return maintenancePlans;
     }
 
+    public List<MaintenancePlan> getAllTimeBasedMaintenancePlans() {
+        QueryParam maintenancePlanTypeQuery = CustomQueryParam.QUERY.setValue("has("+ MaintenancePlanMapper.MP_ON_TIME + ")").toQueryParam();
+
+        List<MaintenancePlan> maintenancePlans = new ArrayList<>();
+        Iterable<ManagedObjectRepresentation> allPages = inventoryApi.getManagedObjects().get(2000, maintenancePlanTypeQuery).allPages();
+        for (ManagedObjectRepresentation managedObject : allPages) {
+            MaintenancePlan maintenancePlan = MaintenancePlanMapper.map2(managedObject);
+            if (maintenancePlan != null) {
+                maintenancePlans.add(maintenancePlan);
+            }
+        }
+        return maintenancePlans;
+    }
+
     /**
      * Creates a new maintenance plan in the Cumulocity IoT Platform.
      * 
@@ -339,6 +353,34 @@ public class MaintenancePlanService {
             MaintenancePlan updatedPlan = MaintenancePlanMapper.map2(updatedObject);
             
             log.info("Successfully updated maintenance plan with ID: {}", id);
+            return updatedPlan;
+            
+        } catch (SDKException e) {
+            log.error("Failed to update maintenance plan with ID: {}", id, e);
+            throw new RuntimeException("Failed to update maintenance plan with ID " + id + ": " + e.getMessage(), e);
+        } catch (Exception e) {
+            log.error("Unexpected error while updating maintenance plan with ID: {}", id, e);
+            throw new RuntimeException("Unexpected error while updating maintenance plan: " + e.getMessage(), e);
+        }
+    }
+
+    public MaintenancePlan updatActivateFlag(String id, Boolean active) {
+        log.info("updatActivateFlag(id: {}, active: {})", id, active);
+        
+        try {
+            // Get the existing maintenance plan
+            MaintenancePlanMapper maintenancePlanMapper = new MaintenancePlanMapper(id);
+            
+            // Update the active field
+            maintenancePlanMapper.setActive(active);
+            
+            // Update in Cumulocity inventory
+            ManagedObjectRepresentation updatedObject = inventoryApi.update(maintenancePlanMapper.getManagedObject());
+            
+            // Convert back to MaintenancePlan using mapper
+            MaintenancePlan updatedPlan = MaintenancePlanMapper.map2(updatedObject);
+            
+            log.info("Successfully updated active flag for maintenance plan with ID: {}", id);
             return updatedPlan;
             
         } catch (SDKException e) {
