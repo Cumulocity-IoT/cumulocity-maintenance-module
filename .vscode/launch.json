@@ -1,0 +1,15 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Spring Boot-App<cumulocity-maintenance-module>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "cumulocity.microservice.maintenancemodule.App",
+            "projectName": "cumulocity-maintenance-module",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env/dev.env",
+            "vmArgs": "-Dlogging.config=src/main/configuration/cumulocity-microservice-maintenance-module-logging.xml"
+        }
+    ]
+}

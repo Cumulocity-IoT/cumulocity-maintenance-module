@@ -21,7 +21,7 @@ import lombok.RequiredArgsConstructor;
 @NoArgsConstructor
 @Schema(description = "Usage-based maintenance trigger based on counters and thresholds")
 @Validated
-public class UsageBasedTrigger implements MaintenanceTrigger {
+public class UsageBasedTrigger {
 
     @Schema(required = true, description = "Type of trigger", example = "Usage-based")
     @NotNull

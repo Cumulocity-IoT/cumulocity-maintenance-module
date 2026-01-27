@@ -8,19 +8,26 @@ import com.cumulocity.model.idtype.GId;
 import com.cumulocity.rest.representation.inventory.ManagedObjectRepresentation;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import cumulocity.microservice.maintenancemodule.model.ConditionBasedTrigger;
+import cumulocity.microservice.maintenancemodule.model.DeviceAssignmentCriteria;
 import cumulocity.microservice.maintenancemodule.model.MaintenancePlan;
 import cumulocity.microservice.maintenancemodule.model.MaintenancePlanCreate;
-import cumulocity.microservice.maintenancemodule.model.MaintenanceTrigger;
+import cumulocity.microservice.maintenancemodule.model.TimeBasedTrigger;
+import cumulocity.microservice.maintenancemodule.model.UsageBasedTrigger;
 
 /**
  * Mapper class for converting between MaintenancePlan domain objects and Cumulocity ManagedObjectRepresentation.
  * Provides functionality to map maintenance plan data to and from Cumulocity IoT Platform format.
+ * 
  * 
  * @author APES
  * @since 1.0.0
  */
 public class MaintenancePlanMapper {
     public static final String MANAGED_OBJECT_TYPE = "c8y_MaintenancePlan";
+    public static final String ALARM_TYPE = "c8y_MaintenancePlanAlarm";
+    public static final String DEVICE_LAST_MAINTENANCE = "mp_LastMaintenance";
+    public static final String DEVICE_NEXT_MAINTENANCE = "mp_NextMaintenance";
     
     public static final String MP_NAME = "mp_Name";
     public static final String MP_DESCRIPTION = "mp_Description";
@@ -30,6 +37,10 @@ public class MaintenancePlanMapper {
     public static final String MP_END_DATE = "mp_EndDate";
     public static final String MP_ACTIVE = "mp_Active";
     public static final String MP_ON = "mp_On";
+    public static final String MP_ON_TIME = "mp_OnTime";
+    public static final String MP_ON_USAGE = "mp_OnUsage";
+    public static final String MP_ON_CONDITIONS = "mp_OnConditions";
+    public static final String MP_APPLY = "mp_Apply";
     
     private final ManagedObjectRepresentation managedObject;
     
@@ -53,7 +64,10 @@ public class MaintenancePlanMapper {
         mapper.setStartDate(maintenancePlanCreate.getStartDate());
         mapper.setEndDate(maintenancePlanCreate.getEndDate());
         mapper.setActive(maintenancePlanCreate.getActive());
-        mapper.setTriggers(maintenancePlanCreate.getOn());
+        mapper.setConditionBasedTriggers(maintenancePlanCreate.getOnConditions());
+        mapper.setUsageBasedTrigger(maintenancePlanCreate.getOnUsage());
+        mapper.setTimeBasedTrigger(maintenancePlanCreate.getOnTime());
+        mapper.setDeviceAssignment(maintenancePlanCreate.getApply());
         return mapper;
     }
     
@@ -78,7 +92,10 @@ public class MaintenancePlanMapper {
         mapper.setStartDate(maintenancePlan.getStartDate());
         mapper.setEndDate(maintenancePlan.getEndDate());
         mapper.setActive(maintenancePlan.getActive());
-        mapper.setTriggers(maintenancePlan.getOn());
+        mapper.setConditionBasedTriggers(maintenancePlan.getOnConditions());
+        mapper.setUsageBasedTrigger(maintenancePlan.getOnUsage());
+        mapper.setTimeBasedTrigger(maintenancePlan.getOnTime());
+        mapper.setDeviceAssignment(maintenancePlan.getApply());
         return mapper;
     }
     
@@ -97,7 +114,10 @@ public class MaintenancePlanMapper {
         maintenancePlan.setStartDate(mapper.getStartDate());
         maintenancePlan.setEndDate(mapper.getEndDate());
         maintenancePlan.setActive(mapper.getActive());
-        maintenancePlan.setOn(mapper.getTriggers());
+        maintenancePlan.setOnConditions(mapper.getConditionBasedTriggers());
+        maintenancePlan.setOnUsage(mapper.getUsageBasedTrigger());
+        maintenancePlan.setOnTime(mapper.getTimeBasedTrigger());
+        maintenancePlan.setApply(mapper.getDeviceAssignment());
         return maintenancePlan;
     }
     
@@ -117,16 +137,16 @@ public class MaintenancePlanMapper {
         this.managedObject.setType(MANAGED_OBJECT_TYPE);
     }
     
-    public void setId(Integer id) {
+    public void setId(String id) {
         if (id == null) {
             return;
         }
         managedObject.setId(GId.asGId(id));
     }
 
-    public Integer getId() {
+    public String getId() {
         if (managedObject.getId() != null) {
-            return Integer.valueOf(managedObject.getId().getValue());
+            return managedObject.getId().getValue();
         }
         return null;
     }
@@ -240,25 +260,85 @@ public class MaintenancePlanMapper {
         }
         managedObject.set(active, MP_ACTIVE);
     }
-    
-    @SuppressWarnings("unchecked")
-    public List<MaintenanceTrigger> getTriggers() {
-        Object triggers = managedObject.get(MP_ON);
-        if (triggers instanceof List) {
-            return (List<MaintenanceTrigger>) triggers;
+
+    public DeviceAssignmentCriteria getDeviceAssignment() {
+        Object deviceAssignment = managedObject.get(MP_APPLY);
+        if (deviceAssignment instanceof DeviceAssignmentCriteria) {
+            return (DeviceAssignmentCriteria) deviceAssignment;
         }
-        return parseTriggers(triggers);
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            return mapper.convertValue(deviceAssignment, DeviceAssignmentCriteria.class);
+        } catch (Exception e) {
+            return null;
+        }
     }
-    
-    public void setTriggers(List<MaintenanceTrigger> triggers) {
-        if (triggers == null) {
+
+    public void setDeviceAssignment(DeviceAssignmentCriteria deviceAssignment) {
+        if (deviceAssignment == null) {
             return;
         }
-        managedObject.set(triggers, MP_ON);
+        managedObject.set(deviceAssignment, MP_APPLY);
+    }
+    
+    public List<ConditionBasedTrigger> getConditionBasedTriggers() {
+        Object onConditions = managedObject.get(MP_ON_CONDITIONS);
+        if (onConditions instanceof List) {
+            return parseConditions(onConditions);
+        }
+        return new java.util.ArrayList<>();
+    }
+
+    public void setConditionBasedTriggers(List<ConditionBasedTrigger> conditionBasedTriggers) {
+        if (conditionBasedTriggers == null) {
+            return;
+        }
+        managedObject.set(conditionBasedTriggers, MP_ON_CONDITIONS);
+    }
+
+
+    public UsageBasedTrigger getUsageBasedTrigger() {
+        Object onUsage = managedObject.get(MP_ON_USAGE);
+        if (onUsage instanceof UsageBasedTrigger) {
+            return (UsageBasedTrigger) onUsage;
+        }
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            return mapper.convertValue(onUsage, UsageBasedTrigger.class);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+    
+    public void setUsageBasedTrigger(UsageBasedTrigger usageBasedTrigger) {
+        if (usageBasedTrigger == null) {
+            return;
+        }
+        managedObject.set(usageBasedTrigger, MP_ON_USAGE);
     }
     
     public ManagedObjectRepresentation getManagedObject() {
         return managedObject;
+    }
+
+    public TimeBasedTrigger getTimeBasedTrigger() {
+        Object onTime = managedObject.get(MP_ON_TIME);
+        if (onTime instanceof TimeBasedTrigger) {
+            return (TimeBasedTrigger) onTime;
+        }
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            return mapper.convertValue(onTime, TimeBasedTrigger.class);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    public void setTimeBasedTrigger(TimeBasedTrigger timeBasedTrigger) {
+        if (timeBasedTrigger == null) {
+            return;
+        }
+        managedObject.set(timeBasedTrigger, MP_ON_TIME);
     }
     
     private DateTime parseDateTime(Object obj) {
@@ -275,15 +355,15 @@ public class MaintenancePlanMapper {
         return null;
     }
     
-    private List<MaintenanceTrigger> parseTriggers(Object obj) {
+    private List<ConditionBasedTrigger> parseConditions(Object obj) {
         if (obj == null) {
-            return null;
+            return new java.util.ArrayList<>();
         }
         try {
             ObjectMapper mapper = new ObjectMapper();
-            return mapper.convertValue(obj, mapper.getTypeFactory().constructCollectionType(List.class, MaintenanceTrigger.class));
+            return mapper.convertValue(obj, mapper.getTypeFactory().constructCollectionType(List.class, ConditionBasedTrigger.class));
         } catch (Exception e) {
-            return null;
+            return new java.util.ArrayList<>();
         }
     }
 }

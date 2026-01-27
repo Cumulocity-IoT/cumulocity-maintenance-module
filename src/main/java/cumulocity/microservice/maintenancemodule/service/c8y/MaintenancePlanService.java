@@ -1,9 +1,7 @@
-package cumulocity.microservice.maintenancemodule.service;
+package cumulocity.microservice.maintenancemodule.service.c8y;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.joda.time.DateTime;
@@ -11,18 +9,21 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import com.cumulocity.rest.representation.PageStatisticsRepresentation;
 import com.cumulocity.rest.representation.inventory.ManagedObjectRepresentation;
 import com.cumulocity.sdk.client.inventory.InventoryApi;
 import com.cumulocity.sdk.client.inventory.InventoryFilter;
 import com.cumulocity.sdk.client.inventory.ManagedObjectCollection;
 import com.cumulocity.sdk.client.inventory.PagedManagedObjectCollectionRepresentation;
 import com.cumulocity.model.idtype.GId;
+import com.cumulocity.sdk.client.QueryParam;
 import com.cumulocity.sdk.client.SDKException;
 
+import cumulocity.microservice.maintenancemodule.model.DeviceAssignmentCriteria;
 import cumulocity.microservice.maintenancemodule.model.MaintenancePlan;
 import cumulocity.microservice.maintenancemodule.model.MaintenancePlanCreate;
 import cumulocity.microservice.maintenancemodule.model.MaintenancePlanListResponse;
-import cumulocity.microservice.maintenancemodule.service.c8y.MaintenancePlanMapper;
+import cumulocity.microservice.maintenancemodule.model.MaintenancePlanType;
 
 /**
  * Service for managing maintenance plans with CRUD operations.
@@ -40,6 +41,97 @@ public class MaintenancePlanService {
 
     public MaintenancePlanService(InventoryApi inventoryApi) {
         this.inventoryApi = inventoryApi;
+    }
+
+    public MaintenancePlanListResponse getActiveMaintenancePlansByType(MaintenancePlanType maintenancePlanType, Integer pageSize, Integer pageNumber) {
+        //TODO check if we need also to check start and end date with current date, DateTime now = new DateTime();
+        QueryParam maintenancePlanTypeQuery = null;
+        if(maintenancePlanType == null) {
+            maintenancePlanTypeQuery = CustomQueryParam.QUERY.setValue(MaintenancePlanMapper.MP_ACTIVE + " eq true").toQueryParam();
+        }else {
+            maintenancePlanTypeQuery = CustomQueryParam.QUERY.setValue("has("+ MaintenancePlanMapper.MP_ON_TIME + ") and " + MaintenancePlanMapper.MP_ACTIVE + " eq true").toQueryParam();
+        }
+        
+        PagedManagedObjectCollectionRepresentation managedObjects = inventoryApi.getManagedObjects().get(pageSize, maintenancePlanTypeQuery);
+         
+        List<MaintenancePlan> allMaintenancePlans = new ArrayList<>();
+        for (ManagedObjectRepresentation managedObject : managedObjects.getManagedObjects()) {
+            MaintenancePlan maintenancePlan = MaintenancePlanMapper.map2(managedObject);
+            if (maintenancePlan != null) {
+                allMaintenancePlans.add(maintenancePlan);
+            }
+        }
+        PageStatisticsRepresentation pageStatistics = managedObjects.getPageStatistics();
+
+
+        MaintenancePlanListResponse response = new MaintenancePlanListResponse();
+        response.setMaintenancePlans(allMaintenancePlans);
+        response.setCurrentPage(pageStatistics.getCurrentPage());
+        response.setPageSize(pageStatistics.getPageSize());
+        response.setTotalPages(pageStatistics.getTotalPages());
+        response.setTotalElements(pageStatistics.getTotalElements());
+
+        return response;
+    }
+
+    public List<MaintenancePlan> getActiveTimeBasedMaintenancePlans() {
+        QueryParam maintenancePlanTypeQuery = CustomQueryParam.QUERY.setValue("has("+ MaintenancePlanMapper.MP_ON_TIME + ") and " + MaintenancePlanMapper.MP_ACTIVE + " eq true").toQueryParam();
+        
+        List<MaintenancePlan> maintenancePlans = new ArrayList<>();
+        Iterable<ManagedObjectRepresentation> allPages = inventoryApi.getManagedObjects().get(2000, maintenancePlanTypeQuery).allPages();
+        for (ManagedObjectRepresentation managedObject : allPages) {
+            MaintenancePlan maintenancePlan = MaintenancePlanMapper.map2(managedObject);
+            if (maintenancePlan != null) {
+                maintenancePlans.add(maintenancePlan);
+            }
+        }
+        return maintenancePlans;
+    }
+
+    public List<MaintenancePlan> getAllTimeBasedMaintenancePlans() {
+        QueryParam maintenancePlanTypeQuery = CustomQueryParam.QUERY.setValue("has("+ MaintenancePlanMapper.MP_ON_TIME + ")").toQueryParam();
+
+        List<MaintenancePlan> maintenancePlans = new ArrayList<>();
+        Iterable<ManagedObjectRepresentation> allPages = inventoryApi.getManagedObjects().get(2000, maintenancePlanTypeQuery).allPages();
+        for (ManagedObjectRepresentation managedObject : allPages) {
+            MaintenancePlan maintenancePlan = MaintenancePlanMapper.map2(managedObject);
+            if (maintenancePlan != null) {
+                maintenancePlans.add(maintenancePlan);
+            }
+        }
+        return maintenancePlans;
+    }
+
+    /**
+     * Creates a new maintenance plan in the Cumulocity IoT Platform.
+     * 
+     * @param maintenancePlanCreate The maintenance plan configuration to create
+     * @return The created maintenance plan with assigned ID
+     * @throws IllegalArgumentException if maintenancePlanCreate is null or invalid
+     * @throws RuntimeException if creation fails in Cumulocity
+     * @since 1.0.0
+     */
+    public MaintenancePlan createMaintenancePlan(MaintenancePlanCreate maintenancePlanCreate) {
+        // Validate input data
+        if (maintenancePlanCreate == null) {
+            throw new IllegalArgumentException("MaintenancePlanCreate cannot be null");
+        }
+        validateMaintenancePlanCreate(maintenancePlanCreate);
+        
+        // Create mapper and convert to ManagedObjectRepresentation
+        MaintenancePlanMapper mapper = MaintenancePlanMapper.map2(maintenancePlanCreate);
+        ManagedObjectRepresentation managedObject = mapper.getManagedObject();
+        
+        try {
+            // Store in Cumulocity inventory
+            ManagedObjectRepresentation createdObject = inventoryApi.create(managedObject);
+            
+            // Convert back to MaintenancePlan using mapper
+            return MaintenancePlanMapper.map2(createdObject);
+            
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to create maintenance plan in Cumulocity: " + e.getMessage(), e);
+        }
     }
 
     /**
@@ -163,38 +255,6 @@ public class MaintenancePlanService {
         
         return true;
     }
-
-    /**
-     * Creates a new maintenance plan in the Cumulocity IoT Platform.
-     * 
-     * @param maintenancePlanCreate The maintenance plan configuration to create
-     * @return The created maintenance plan with assigned ID
-     * @throws IllegalArgumentException if maintenancePlanCreate is null or invalid
-     * @throws RuntimeException if creation fails in Cumulocity
-     * @since 1.0.0
-     */
-    public MaintenancePlan createMaintenancePlan(MaintenancePlanCreate maintenancePlanCreate) {
-        // Validate input data
-        if (maintenancePlanCreate == null) {
-            throw new IllegalArgumentException("MaintenancePlanCreate cannot be null");
-        }
-        validateMaintenancePlanCreate(maintenancePlanCreate);
-        
-        // Create mapper and convert to ManagedObjectRepresentation
-        MaintenancePlanMapper mapper = MaintenancePlanMapper.map2(maintenancePlanCreate);
-        ManagedObjectRepresentation managedObject = mapper.getManagedObject();
-        
-        try {
-            // Store in Cumulocity inventory
-            ManagedObjectRepresentation createdObject = inventoryApi.create(managedObject);
-            
-            // Convert back to MaintenancePlan using mapper
-            return MaintenancePlanMapper.map2(createdObject);
-            
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to create maintenance plan in Cumulocity: " + e.getMessage(), e);
-        }
-    }
     
     /**
      * Validate maintenance plan create data
@@ -213,10 +273,12 @@ public class MaintenancePlanService {
             }
         }
         
-        // Additional validation for triggers if needed
-        if (maintenancePlanCreate.getOn() != null && !maintenancePlanCreate.getOn().isEmpty()) {
-            // TODO: Validate trigger configuration
+        // Additional validation for triggers, at least one trigger must be defined
+        boolean atLeastOneTriggerDefined = (maintenancePlanCreate.getOnTime() != null || maintenancePlanCreate.getOnUsage() != null || !maintenancePlanCreate.getOnConditions().isEmpty());
+        if (!atLeastOneTriggerDefined) {
+            throw new IllegalArgumentException("Maintenance plan validation failed: at least one trigger must be defined");
         }
+
     }
 
     /**
@@ -228,7 +290,7 @@ public class MaintenancePlanService {
      * @throws RuntimeException if plan not found or retrieval fails
      * @since 1.0.0
      */
-    public MaintenancePlan getMaintenancePlan(Integer id) {
+    public MaintenancePlan getMaintenancePlan(String id) {
         if (id == null) {
             throw new IllegalArgumentException("Maintenance plan ID cannot be null");
         }
@@ -236,7 +298,7 @@ public class MaintenancePlanService {
         log.debug("Retrieving maintenance plan with ID: {}", id);
         
         try {
-            ManagedObjectRepresentation managedObject = inventoryApi.get(GId.asGId(id.toString()));
+            ManagedObjectRepresentation managedObject = inventoryApi.get(GId.asGId(id));
             
             if (managedObject == null) {
                 log.warn("Maintenance plan with ID {} not found", id);
@@ -268,7 +330,7 @@ public class MaintenancePlanService {
      * @throws RuntimeException if plan not found or update fails
      * @since 1.0.0
      */
-    public MaintenancePlan updateMaintenancePlan(Integer id, MaintenancePlan maintenancePlan) {
+    public MaintenancePlan updateMaintenancePlan(String id, MaintenancePlan maintenancePlan) {
         if(validateMaintenancePlan(maintenancePlan) == false) {
             return null; // Validation failed, return null
         }
@@ -291,6 +353,34 @@ public class MaintenancePlanService {
             MaintenancePlan updatedPlan = MaintenancePlanMapper.map2(updatedObject);
             
             log.info("Successfully updated maintenance plan with ID: {}", id);
+            return updatedPlan;
+            
+        } catch (SDKException e) {
+            log.error("Failed to update maintenance plan with ID: {}", id, e);
+            throw new RuntimeException("Failed to update maintenance plan with ID " + id + ": " + e.getMessage(), e);
+        } catch (Exception e) {
+            log.error("Unexpected error while updating maintenance plan with ID: {}", id, e);
+            throw new RuntimeException("Unexpected error while updating maintenance plan: " + e.getMessage(), e);
+        }
+    }
+
+    public MaintenancePlan updatActivateFlag(String id, Boolean active) {
+        log.info("updatActivateFlag(id: {}, active: {})", id, active);
+        
+        try {
+            // Get the existing maintenance plan
+            MaintenancePlanMapper maintenancePlanMapper = new MaintenancePlanMapper(id);
+            
+            // Update the active field
+            maintenancePlanMapper.setActive(active);
+            
+            // Update in Cumulocity inventory
+            ManagedObjectRepresentation updatedObject = inventoryApi.update(maintenancePlanMapper.getManagedObject());
+            
+            // Convert back to MaintenancePlan using mapper
+            MaintenancePlan updatedPlan = MaintenancePlanMapper.map2(updatedObject);
+            
+            log.info("Successfully updated active flag for maintenance plan with ID: {}", id);
             return updatedPlan;
             
         } catch (SDKException e) {
@@ -358,29 +448,125 @@ public class MaintenancePlanService {
             }
         }
         
-        // Additional validation for triggers if needed
-        if (maintenancePlan.getOn() != null && !maintenancePlan.getOn().isEmpty()) {
-            // Validate each trigger in the list
-            for (Object trigger : maintenancePlan.getOn()) {
-                if (trigger == null) {
-                    log.warn("Maintenance plan validation failed: trigger is null");
-                    return false;
-                }
-                // Example: Check for required 'type' property using reflection or interface
-                try {
-                    String type = (String) trigger.getClass().getMethod("getType").invoke(trigger);
-                    if (type == null || type.trim().isEmpty()) {
-                        log.warn("Maintenance plan validation failed: trigger type is missing");
-                        return false;
-                    }
-                } catch (Exception e) {
-                    log.warn("Maintenance plan validation failed: unable to access trigger type", e);
-                    return false;
-                }
-            }
+        // Additional validation for triggers, at least one trigger must be defined
+        boolean atLeastOneTriggerDefined = (maintenancePlan.getOnTime() != null || maintenancePlan.getOnUsage() != null || !maintenancePlan.getOnConditions().isEmpty());
+        if (!atLeastOneTriggerDefined) {
+            log.warn("Maintenance plan validation failed: at least one trigger must be defined");
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Updates device assignment for a maintenance plan.
+     * 
+     * @param id the unique identifier of the maintenance plan
+     * @param deviceAssignment the device assignment filter criteria
+     * @return the updated device assignment
+     * @throws IllegalArgumentException if id or deviceAssignment is null
+     * @throws RuntimeException if plan not found or update fails
+     * @since 1.0.0
+     */
+    public DeviceAssignmentCriteria updateDeviceAssignment(String id, DeviceAssignmentCriteria deviceAssignment) {
+        if (id == null) {
+            throw new IllegalArgumentException("Maintenance plan ID cannot be null");
+        }
+        if (deviceAssignment == null) {
+            throw new IllegalArgumentException("DeviceAssignment cannot be null");
         }
         
-        return true;
+        log.info("updateDeviceAssignment(id: {}, deviceAssignment: {})", id, deviceAssignment);
+        
+        try {
+            // Get the existing maintenance plan
+            MaintenancePlan maintenancePlan = getMaintenancePlan(id);
+            if (maintenancePlan == null) {
+                throw new RuntimeException("Maintenance plan with ID " + id + " not found");
+            }
+            
+            // Update the apply field
+            maintenancePlan.setApply(deviceAssignment);
+            
+            // Update the maintenance plan
+            updateMaintenancePlan(id, maintenancePlan);
+            
+            log.info("Successfully updated device assignment for maintenance plan with ID: {}", id);
+            return deviceAssignment;
+            
+        } catch (Exception e) {
+            log.error("Failed to update device assignment for maintenance plan with ID: {}", id, e);
+            throw new RuntimeException("Failed to update device assignment: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Retrieves device assignment for a maintenance plan.
+     * 
+     * @param id the unique identifier of the maintenance plan
+     * @return the device assignment filter criteria
+     * @throws IllegalArgumentException if id is null
+     * @throws RuntimeException if plan not found or retrieval fails
+     * @since 1.0.0
+     */
+    public DeviceAssignmentCriteria getDeviceAssignment(String id) {
+        if (id == null) {
+            throw new IllegalArgumentException("Maintenance plan ID cannot be null");
+        }
+        
+        log.debug("Retrieving device assignment for maintenance plan with ID: {}", id);
+        
+        try {
+            MaintenancePlan maintenancePlan = getMaintenancePlan(id);
+            if (maintenancePlan == null) {
+                throw new RuntimeException("Maintenance plan with ID " + id + " not found");
+            }
+            
+            DeviceAssignmentCriteria deviceAssignment = maintenancePlan.getApply();
+            
+            log.debug("Successfully retrieved device assignment for maintenance plan with ID: {}", id);
+            return deviceAssignment;
+            
+        } catch (Exception e) {
+            log.error("Failed to retrieve device assignment for maintenance plan with ID: {}", id, e);
+            throw new RuntimeException("Failed to retrieve device assignment: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Removes device assignment from a maintenance plan.
+     * 
+     * @param id the unique identifier of the maintenance plan
+     * @throws IllegalArgumentException if id is null
+     * @throws RuntimeException if plan not found or update fails
+     * @since 1.0.0
+     */
+    public void deleteDeviceAssignment(String id) {
+        if (id == null) {
+            throw new IllegalArgumentException("Maintenance plan ID cannot be null");
+        }
+        
+        log.debug("Deleting device assignment for maintenance plan with ID: {}", id);
+        
+        try {
+            // Get the existing maintenance plan
+            MaintenancePlan maintenancePlan = getMaintenancePlan(id);
+            if (maintenancePlan == null) {
+                throw new RuntimeException("Maintenance plan with ID " + id + " not found");
+            }
+            
+            // Remove the apply field
+            maintenancePlan.setApply(null);
+            
+            // Update the maintenance plan
+            updateMaintenancePlan(id, maintenancePlan);
+            
+            log.info("Successfully deleted device assignment for maintenance plan with ID: {}", id);
+            
+        } catch (Exception e) {
+            log.error("Failed to delete device assignment for maintenance plan with ID: {}", id, e);
+            throw new RuntimeException("Failed to delete device assignment: " + e.getMessage(), e);
+        }
     }
 
 }

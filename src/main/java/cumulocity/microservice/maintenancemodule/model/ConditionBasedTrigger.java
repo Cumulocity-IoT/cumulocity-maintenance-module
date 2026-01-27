@@ -23,7 +23,7 @@ import lombok.RequiredArgsConstructor;
 @NoArgsConstructor
 @Schema(description = "Condition-based maintenance trigger with multiple conditions")
 @Validated
-public class ConditionBasedTrigger implements MaintenanceTrigger {
+public class ConditionBasedTrigger {
 
     @Schema(required = true, description = "Type of trigger", example = "Condition-based")
     @NotNull

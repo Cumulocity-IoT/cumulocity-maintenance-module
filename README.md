@@ -1,7 +1,9 @@
 # cumulocity-maintenance-module
 This module extends Cumulocity with maintenance plans for devices and assets. It gets configured by a declarative JSON file and provides a REST API to manage maintenance plans. In comparison to Analytics Builder which offers an imperative approach, this module focuses on declarative definitions and focus only on this maintenance aspect. Each maintenance plan can be associated with one or more devices and assets, and it can be scheduled based on time, usage, or condition.
 
-## Maintenance Types
+It also provides an API to notify about maintenance actions.
+
+## Supported Maintenance Types
 
 ### Time-based Maintenance (TBM)
 
@@ -14,24 +16,25 @@ Example:
 ```json
 
 {
-  "name": "Time-based Maintenance",
-  "description": "This is a simple time-based maintenance task.",
-  "text": "Please contact your service for planned maintenance, the 6 month maintenance plan is reached!",
+  "name": "30 Day maintenance",
+  "description": "This is a 30 day maintenance task.",
+  "notificationText": "Maintenance Task: Check something and restart device!",
+  "notificationType": "alarm",
   "startDate": "2025-10-01T00:00:00Z",
-  "endDate": "2030-10-02T00:00:00Z",
+  "endDate": "2026-10-02T00:00:00Z",
   "active": true,
-  "on": [
-    {
-      "type": "Time-based",
-      "interval": "P6M"
-    }
-  ]
+  "onTime": {
+      "interval": "P30D"
+  },
+  "apply": {
+    "idsInternal": ["383901"]
+  }
 }
 
 ```
 
 
-### Usage-based Maintenance
+### Usage-based Maintenance (UBM)
 
 • Based on operational metrics like hours run, cycles, or kilometers.
 
@@ -98,3 +101,21 @@ Example:
   ]
 }
 ```
+
+
+### Nofigation for Maintenance Actions
+
+```json
+{
+  "deviceId": "383902",
+  "status": "COMPLETED",
+  "notification": "Maintenance action completed!"
+}
+```
+
+Following status can be set:
+
+- SCHEDULED,
+- IN_PROGRESS,
+- COMPLETED,
+- CANCELLED

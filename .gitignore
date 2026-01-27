@@ -1,4 +1,12 @@
-# Ignore VS Code specific files
-.vscode/
-# Ignore target directory
+# VSCode and environment variable files
+.vscode/*
+!.vscode/launch.json
+.env/
+
+# Java related ignores
 target/
+*.class
+*.jar
+
+# Open API generated code
+docs/.openapi-generator/
