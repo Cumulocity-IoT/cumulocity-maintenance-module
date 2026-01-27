@@ -8,7 +8,7 @@ commands:
   - name: list
     description: Get List of maintenance plans
     method: GET
-    path: service/maintenance-module/api/maintenance-plans
+    path: service/maintenance-module/api/maintenance/plans
     queryParameters:
       - name: active
         type: boolean
@@ -16,7 +16,7 @@ commands:
   - name: get
     description: Get a maintenance plan by id
     method: GET
-    path: service/maintenance-module/api/maintenance-plans/{id}
+    path: service/maintenance-module/api/maintenance/plans/{id}
     pathParameters:
       - name: id
         type: string
@@ -36,7 +36,7 @@ commands:
   - name: delete
     description: Delete a maintenance plan by id
     method: DELETE
-    path: service/maintenance-module/api/maintenance-plans/{id}
+    path: service/maintenance-module/api/maintenance/plans/{id}
     pathParameters:
       - name: id
         type: string
@@ -56,4 +56,4 @@ commands:
   - name: create
     description: Create a new maintenance plan
     method: POST
-    path: service/maintenance-module/api/maintenance-plans
+    path: service/maintenance-module/api/maintenance/plans
