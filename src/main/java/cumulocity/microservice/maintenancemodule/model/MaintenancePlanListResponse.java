@@ -14,17 +14,10 @@ import lombok.AllArgsConstructor;
 @Schema(description = "Response containing a list of maintenance plans")
 public class MaintenancePlanListResponse {
 
+    // Manual Setter to guarantee compilation
+    // Manual Getter
     @Schema(description = "List of maintenance plans")
     @JsonProperty("plans")
     private List<MaintenancePlan> plans = new ArrayList<>();
 
-    // Manual Setter to guarantee compilation
-    public void setPlans(List<MaintenancePlan> plans) {
-        this.plans = plans;
-    }
-
-    // Manual Getter
-    public List<MaintenancePlan> getPlans() {
-        return plans;
-    }
 }
