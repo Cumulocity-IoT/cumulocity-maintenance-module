@@ -2,3 +2,4 @@
 .vscode/
 # Ignore target directory
 target/
+application-local.properties

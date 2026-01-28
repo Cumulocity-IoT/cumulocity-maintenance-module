@@ -1,0 +1,17 @@
+spring:
+  ai:
+    openai:
+      api-key: test-key-for-testing
+
+application:
+  name: cumulocity-maintenance-module
+
+C8Y:
+  bootstrap:
+    register: false
+  microservice:
+    isolation: MULTI_TENANT
+  baseURL: http://localhost:8080
+  tenant: test-tenant
+  user: test-user
+  password: test-password

@@ -1,53 +1,30 @@
 package cumulocity.microservice.maintenancemodule.model;
 
 import java.util.List;
-
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
-
-import org.springframework.validation.annotation.Validated;
-
+import java.util.ArrayList;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
+import lombok.AllArgsConstructor;
 
-/**
- * Response wrapper for paginated maintenance plan list results.
- * Provides maintenance plan data with pagination information aligned with Cumulocity patterns.
- * 
- * @author APES
- * @since 1.0.0
- */
 @Data
-@RequiredArgsConstructor
 @NoArgsConstructor
-@Schema(description = "Response wrapper for paginated maintenance plan list results")
-@Validated
+@AllArgsConstructor
+@Schema(description = "Response containing a list of maintenance plans")
 public class MaintenancePlanListResponse {
 
-    @Schema(required = true, description = "List of maintenance plans")
-    @NotNull
-    @NonNull
-    @Valid
-    private List<MaintenancePlan> maintenancePlans;
+    @Schema(description = "List of maintenance plans")
+    @JsonProperty("plans")
+    private List<MaintenancePlan> plans = new ArrayList<>();
 
-    @Schema(required = true, description = "Current page number (0-based)", example = "0")
-    @NotNull
-    @NonNull
-    private Integer currentPage;
+    // Manual Setter to guarantee compilation
+    public void setPlans(List<MaintenancePlan> plans) {
+        this.plans = plans;
+    }
 
-    @Schema(required = true, description = "Number of items per page", example = "10")
-    @NotNull
-    @NonNull
-    private Integer pageSize;
-
-    @Schema(required = true, description = "Total number of pages", example = "5")
-    @NotNull
-    @NonNull
-    private Integer totalPages;
-
-    @Schema(description = "Total number of elements across all pages", example = "42")
-    private Long totalElements;
+    // Manual Getter
+    public List<MaintenancePlan> getPlans() {
+        return plans;
+    }
 }
