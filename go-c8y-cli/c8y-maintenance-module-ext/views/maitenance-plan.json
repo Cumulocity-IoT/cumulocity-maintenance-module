@@ -5,7 +5,7 @@
         {
             "name": "maitenance-plan",
             "priority": 350,
-            "requestPath": "service/maintenance-module/api/maintenance-plans",
+            "requestPath": "service/maintenance-module/api/maintenance/plans",
             "requestMethod": "GET",
             "columns": [
                 "id",
@@ -15,7 +15,8 @@
                 "endDate",
                 "active",
                 "notificationType",
-                "notificationText"
+                "notificationText",
+                "apply.idsInternal"
             ]
         }
     ]
