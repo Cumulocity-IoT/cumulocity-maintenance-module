@@ -10,9 +10,9 @@
 | **startDate** | **Date** | Start date and time for the maintenance | [default to null] |
 | **endDate** | **Date** | End date and time for the maintenance | [default to null] |
 | **active** | **Boolean** | Indicates whether the maintenance plan is active | [optional] [default to null] |
-| **apply** | [**DeviceAssignmentCriteria**](DeviceAssignmentCriteria.md) |  | [optional] [default to null] |
-| **onTime** | [**TimeBasedTrigger**](TimeBasedTrigger.md) |  | [optional] [default to null] |
-| **onUsage** | [**UsageBasedTrigger**](UsageBasedTrigger.md) |  | [optional] [default to null] |
+| **apply** | [**DeviceAssignmentCriteria**](DeviceAssignmentCriteria.md) | Device assignment filter criteria | [optional] [default to null] |
+| **onTime** | [**TimeBasedTrigger**](TimeBasedTrigger.md) | Time-based maintenance trigger definition | [optional] [default to null] |
+| **onUsage** | [**UsageBasedTrigger**](UsageBasedTrigger.md) | Usage-based maintenance trigger definition | [optional] [default to null] |
 | **onConditions** | [**List**](ConditionBasedTrigger.md) | Condition-based maintenance trigger definitions. Conditions are combined using logical AND. | [optional] [default to null] |
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)

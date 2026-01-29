@@ -25,7 +25,7 @@ import lombok.RequiredArgsConstructor;
 @Validated
 public class TimeBasedTrigger {
 
-    @Schema(required = true, description = "Cron expression for scheduling (e.g., '0 9 * * 1' for every Monday at 9:00 AM)", example = "0 9 * * 1")
+    @Schema(required = true, description = "Cron expression (6-field format (Spring/Quartz standard) for scheduling (e.g., '0 0 9 * * 1' for every Monday at 9:00 AM)", example = "0 0 9 * * 1")
     @NotNull
     @NonNull
     @ValidCron
