@@ -200,8 +200,8 @@ public class TimeBasedMaintenanceService {
         
         try {
             Object orginNextMaintenanceObj = device.get(MaintenancePlanMapper.DEVICE_NEXT_MAINTENANCE);
-            if (orginNextMaintenanceObj instanceof DateTime) {
-                orginNextMaintenance = (DateTime) orginNextMaintenanceObj;
+            if (orginNextMaintenanceObj instanceof String) {
+                orginNextMaintenance = DateTime.parse((String) orginNextMaintenanceObj);
             }
         } catch (Exception e) {
             log.warn("Could not retrieve last maintenance time for device {}", device.getId().getValue());
@@ -216,6 +216,8 @@ public class TimeBasedMaintenanceService {
             } catch (Exception e) {
                 log.error("Could not update next maintenance time for device {}", device.getId().getValue(), e);
             }
+        }else {
+            log.info("Next maintenance time for device {} is already up to date", device.getId().getValue());
         }
     }
 
