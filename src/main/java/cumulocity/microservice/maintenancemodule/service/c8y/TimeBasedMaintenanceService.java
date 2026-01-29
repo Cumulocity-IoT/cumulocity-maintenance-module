@@ -9,12 +9,15 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 
 import org.joda.time.DateTime;
-import org.joda.time.Period;
-import org.joda.time.format.ISOPeriodFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.support.CronExpression;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 
 import com.cumulocity.microservice.context.ContextService;
 import com.cumulocity.microservice.context.credentials.MicroserviceCredentials;
@@ -146,14 +149,37 @@ public class TimeBasedMaintenanceService {
             lastMaintenance = device.getCreationDateTime();
         }
         
-        //load inteval from maintenance plan
-        String interval = maintenancePlan.getOnTime().getInterval();
-        log.info("Calculating next maintenance time for device {} with last maintenance at {} and interval {}",
-                device.getId().getValue(), lastMaintenance.toString(), interval);
+        //load cron expression from maintenance plan
+        String cronExpr = maintenancePlan.getOnTime().getCronExpression();
+        log.info("Calculating next maintenance time for device {} with last maintenance at {} and cron expression {}",
+                device.getId().getValue(), lastMaintenance.toString(), cronExpr);
         
-        // Parse ISO 8601 duration and calculate next maintenance
-        Period period = ISOPeriodFormat.standard().parsePeriod(interval);
-        DateTime nextMaintenance = lastMaintenance.plus(period);
+        // Parse cron expression and calculate next maintenance
+        DateTime nextMaintenance = null;
+        try {
+            CronExpression cron = CronExpression.parse(cronExpr);
+            // Convert Joda DateTime to Java Time LocalDateTime
+            LocalDateTime lastMaintenanceLocal = LocalDateTime.ofInstant(
+                lastMaintenance.toDate().toInstant(),
+                ZoneId.systemDefault()
+            );
+            // Calculate next execution
+            LocalDateTime nextLocal = cron.next(lastMaintenanceLocal);
+            if (nextLocal != null) {
+                // Convert back to Joda DateTime
+                ZonedDateTime zonedNext = nextLocal.atZone(ZoneId.systemDefault());
+                nextMaintenance = new DateTime(zonedNext.toInstant().toEpochMilli());
+            }
+        } catch (Exception e) {
+            log.error("Invalid cron expression '{}' for maintenance plan {}", cronExpr, maintenancePlan.getName(), e);
+            return;
+        }
+        
+        if (nextMaintenance == null) {
+            log.warn("Could not calculate next maintenance time for device {}", device.getId().getValue());
+            return;
+        }
+        
         log.info("Next maintenance for device {} is scheduled at {}", device.getId().getValue(), nextMaintenance.toString());
 
         //maintenancePlan.getOnTime().getInterval();

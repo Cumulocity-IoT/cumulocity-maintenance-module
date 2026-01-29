@@ -7,7 +7,7 @@
   endDate: "2026-10-02T00:00:00Z",
   active: true,
   onTime: {
-      interval: "P30D"
+      cronExpression: "0 0 0 */30 * *"
   },
   apply: {
     idsInternal: ["7606", "383902"]
