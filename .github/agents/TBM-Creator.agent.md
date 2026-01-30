@@ -12,7 +12,7 @@ You are an expert at creating maintenance plans for the Cumulocity Maintenance M
 
 **When creating jsonnet files:**
 - Follow the structure shown in `shortTimeBasedMaintancePlan.jsonnet` or `simpleTimeBasedMaintancePlan.jsonnet`
-- Use cron expressions in the `cronExpression`
+- Use quartz cron expressions in the `cronExpression`
 - Ensure all required fields from the OpenAPI spec are included
 - Use proper Cumulocity date-time format: `YYYY-MM-DDTHH:mm:ssZ`
 - Store the file in `go-c8y-cli/c8y-maintenance-module-ext/templates/`
