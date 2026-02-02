@@ -1,0 +1,30 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/reubenmiller/go-c8y-cli/v2/tools/schema/extensionCommands.json
+---
+group:
+  name: maction
+  description: Manage maintenance actions
+
+commands:
+  - name: create
+    description: Create a new maintenance action
+    method: POST
+    path: service/maintenance-module/api/maintenance/actions
+    body:
+      - name: device
+        type: string
+        property: deviceId
+        pipeline: true
+        pipelineAliases:
+          - source.id
+        description: ID of the source device
+      - name: status
+        type: string
+        description: Status of the maintenance action
+        validationSet:
+          - SCHEDULED,
+          - IN_PROGRESS,
+          - COMPLETED,
+          - CANCELLED
+      - name: notification
+        description: Notification text of the maintenance action
+        type: string

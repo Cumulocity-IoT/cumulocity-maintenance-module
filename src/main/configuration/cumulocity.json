@@ -6,13 +6,20 @@
 	},
 	"isolation": "MULTI_TENANT",
 	"resources": {
-        "cpu": "0.5",
-        "memory": "512M"
+        "cpu": "1",
+        "memory": "1G"
     },
 	"requiredRoles": [
 		"ROLE_INVENTORY_READ",
 		"ROLE_INVENTORY_CREATE",
-		"ROLE_INVENTORY_ADMIN"
+		"ROLE_INVENTORY_ADMIN",
+		"ROLE_EVENT_ADMIN",
+		"ROLE_EVENT_READ",
+		"ROLE_ALARM_READ",
+		"ROLE_ALARM_ADMIN",
+		"ROLE_USER_MANAGEMENT_READ",
+		"ROLE_AUDIT_READ",
+		"ROLE_AUDIT_ADMIN"
 	],
 	"roles": [
 	],
