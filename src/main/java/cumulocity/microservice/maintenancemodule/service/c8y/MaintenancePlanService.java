@@ -1,6 +1,10 @@
 package cumulocity.microservice.maintenancemodule.service.c8y;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -16,7 +20,6 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.joda.time.DateTime;
 import com.cumulocity.rest.representation.PageStatisticsRepresentation;
 import com.cumulocity.rest.representation.inventory.ManagedObjectRepresentation;
 import com.cumulocity.sdk.client.inventory.InventoryApi;
@@ -49,7 +52,6 @@ public class MaintenancePlanService {
     private final ChatClient chatClient;
     private final String maintenanceSchemaJson;
     private final ObjectMapper objectMapper;
-
     private final InventoryApi inventoryApi;
 
     private static final String JSON_SCHEMA = """
@@ -66,40 +68,36 @@ public class MaintenancePlanService {
         }
         """;
 
-    private static final String SYSTEM_PROMPT = """
-        You are a generic Maintenance Planning Assistant.
-        
-        RULES:
-        1. You must ONLY generate maintenance plans.
-        2. If the user prompt is not related to maintenance, equipment, or machinery, return: {"error": "Irrelevant prompt"}.
-        3. Output MUST be valid JSON matching this schema:
-        %s
-        """.formatted(JSON_SCHEMA);
-
     @Autowired
     public MaintenancePlanService(
+            InventoryApi inventoryApi,
             ChatClient.Builder chatClientBuilder,
             ObjectMapper objectMapper,
-            @Value("classpath:maintenance_schema.json") Resource schemaResource) throws IOException {
-    public MaintenancePlanService(InventoryApi inventoryApi) {
-        this.inventoryApi = inventoryApi;
-    }
+            @Value("classpath:maintenance_schema.json") Resource schemaResource) {
 
+        this.inventoryApi = inventoryApi;
         this.chatClient = chatClientBuilder.build();
         this.objectMapper = objectMapper;
 
+        String schemaContent = "{}";
         if (schemaResource.exists()) {
-            this.maintenanceSchemaJson = schemaResource.getContentAsString(StandardCharsets.UTF_8);
+            try {
+                schemaContent = schemaResource.getContentAsString(StandardCharsets.UTF_8);
+            } catch (IOException e) {
+                log.warn("Failed to read maintenance_schema.json", e);
+            }
         } else {
-            this.maintenanceSchemaJson = "{}";
             log.warn("maintenance_schema.json not found in classpath");
+        }
+        this.maintenanceSchemaJson = schemaContent;
+    }
+
     public MaintenancePlanListResponse getActiveMaintenancePlansByType(MaintenancePlanType maintenancePlanType, Integer pageSize, Integer pageNumber) {
-        //TODO check if we need also to check start and end date with current date, DateTime now = new DateTime();
-        QueryParam maintenancePlanTypeQuery = null;
-        if(maintenancePlanType == null) {
+        QueryParam maintenancePlanTypeQuery;
+        if (maintenancePlanType == null) {
             maintenancePlanTypeQuery = CustomQueryParam.QUERY.setValue(MaintenancePlanMapper.MP_ACTIVE + " eq true").toQueryParam();
-        }else {
-            maintenancePlanTypeQuery = CustomQueryParam.QUERY.setValue("has("+ MaintenancePlanMapper.MP_ON_TIME + ") and " + MaintenancePlanMapper.MP_ACTIVE + " eq true").toQueryParam();
+        } else {
+            maintenancePlanTypeQuery = CustomQueryParam.QUERY.setValue("has(" + MaintenancePlanMapper.MP_ON_TIME + ") and " + MaintenancePlanMapper.MP_ACTIVE + " eq true").toQueryParam();
         }
 
         PagedManagedObjectCollectionRepresentation managedObjects = inventoryApi.getManagedObjects().get(pageSize, maintenancePlanTypeQuery);
@@ -113,20 +111,22 @@ public class MaintenancePlanService {
         }
         PageStatisticsRepresentation pageStatistics = managedObjects.getPageStatistics();
 
+        MaintenancePlanListResponse response = new MaintenancePlanListResponse();
+        response.setMaintenancePlans(allMaintenancePlans);
+        if (pageStatistics != null) {
+            response.setCurrentPage(pageStatistics.getCurrentPage());
+            response.setPageSize(pageStatistics.getPageSize());
+            response.setTotalPages(pageStatistics.getTotalPages());
+            response.setTotalElements(pageStatistics.getTotalElements());
+        }
+        return response;
+    }
+
     /**
-     * Generates a maintenance plan proposal.
+     * Generates a maintenance plan proposal using AI.
      * Uses Single-Shot Prompting: The Schema and Guarding rules are sent in one go.
      */
     public MaintenancePlanProposal proposeMaintenancePlan(String userPrompt) {
-
-        //
-        MaintenancePlanListResponse response = new MaintenancePlanListResponse();
-        response.setMaintenancePlans(allMaintenancePlans);
-        response.setCurrentPage(pageStatistics.getCurrentPage());
-        response.setPageSize(pageStatistics.getPageSize());
-        response.setTotalPages(pageStatistics.getTotalPages());
-        response.setTotalElements(pageStatistics.getTotalElements());
-
         // 1. Construct the System Prompt with Guarding, Data Rules & Schema
         String systemInstructions = """
             You are a maintenance planning assistant.
@@ -147,11 +147,39 @@ public class MaintenancePlanService {
             
             Do not include markdown formatting (like ```json ... ```). Return raw JSON only.
             """.formatted(maintenanceSchemaJson);
-        return response;
+
+        // 2. Call the AI
+        String aiResponse = chatClient.prompt(new Prompt(
+                new SystemMessage(systemInstructions),
+                new UserMessage(userPrompt)
+        )).call().content();
+
+        // 3. Clean and Parse Response
+        String cleanedJson = cleanMarkdown(aiResponse);
+
+        try {
+            // Read as generic node first to check for errors
+            JsonNode rootNode = objectMapper.readTree(cleanedJson);
+
+            // Check if AI triggered the guard rail
+            if (rootNode.has("error")) {
+                log.warn("AI rejected prompt: {}", rootNode.get("error").asText());
+                throw new IllegalArgumentException("Irrelevant prompt: " + rootNode.get("error").asText());
+            }
+
+            // Convert to actual POJO
+            return objectMapper.treeToValue(rootNode, MaintenancePlanProposal.class);
+
+        } catch (IllegalArgumentException e) {
+            throw e; // Re-throw guarding errors
+        } catch (Exception e) {
+            log.error("Failed to parse AI response: {}", cleanedJson, e);
+            throw new RuntimeException("AI generated invalid JSON", e);
+        }
     }
 
     public List<MaintenancePlan> getActiveTimeBasedMaintenancePlans() {
-        QueryParam maintenancePlanTypeQuery = CustomQueryParam.QUERY.setValue("has("+ MaintenancePlanMapper.MP_ON_TIME + ") and " + MaintenancePlanMapper.MP_ACTIVE + " eq true").toQueryParam();
+        QueryParam maintenancePlanTypeQuery = CustomQueryParam.QUERY.setValue("has(" + MaintenancePlanMapper.MP_ON_TIME + ") and " + MaintenancePlanMapper.MP_ACTIVE + " eq true").toQueryParam();
 
         List<MaintenancePlan> maintenancePlans = new ArrayList<>();
         Iterable<ManagedObjectRepresentation> allPages = inventoryApi.getManagedObjects().get(2000, maintenancePlanTypeQuery).allPages();
@@ -165,7 +193,7 @@ public class MaintenancePlanService {
     }
 
     public List<MaintenancePlan> getAllTimeBasedMaintenancePlans() {
-        QueryParam maintenancePlanTypeQuery = CustomQueryParam.QUERY.setValue("has("+ MaintenancePlanMapper.MP_ON_TIME + ")").toQueryParam();
+        QueryParam maintenancePlanTypeQuery = CustomQueryParam.QUERY.setValue("has(" + MaintenancePlanMapper.MP_ON_TIME + ")").toQueryParam();
 
         List<MaintenancePlan> maintenancePlans = new ArrayList<>();
         Iterable<ManagedObjectRepresentation> allPages = inventoryApi.getManagedObjects().get(2000, maintenancePlanTypeQuery).allPages();
@@ -177,15 +205,6 @@ public class MaintenancePlanService {
         }
         return maintenancePlans;
     }
-
-        // 2. Call the AI
-        String aiResponse = chatClient.prompt(new Prompt(
-                new SystemMessage(systemInstructions),
-                new UserMessage(userPrompt)
-        )).call().content();
-
-        // 3. Clean and Parse Response
-        String cleanedJson = cleanMarkdown(aiResponse);
 
     /**
      * Creates a new maintenance plan in the Cumulocity IoT Platform.
@@ -208,20 +227,6 @@ public class MaintenancePlanService {
         ManagedObjectRepresentation managedObject = mapper.getManagedObject();
 
         try {
-            // Read as generic node first to check for errors
-            JsonNode rootNode = objectMapper.readTree(cleanedJson);
-
-            // Check if AI triggered the guard rail
-            if (rootNode.has("error")) {
-                log.warn("AI rejected prompt: {}", rootNode.get("error").asText());
-                throw new IllegalArgumentException("Irrelevant prompt: " + rootNode.get("error").asText());
-            }
-
-            // Convert to actual POJO
-            return objectMapper.treeToValue(rootNode, MaintenancePlanProposal.class);
-
-        } catch (IllegalArgumentException e) {
-            throw e; // Re-throw guarding errors
             // Store in Cumulocity inventory
             ManagedObjectRepresentation createdObject = inventoryApi.create(managedObject);
 
@@ -229,8 +234,7 @@ public class MaintenancePlanService {
             return MaintenancePlanMapper.map2(createdObject);
 
         } catch (Exception e) {
-            log.error("Failed to parse AI response: {}", cleanedJson, e);
-            throw new RuntimeException("AI generated invalid JSON", e);
+            log.error("Failed to create maintenance plan", e);
             throw new RuntimeException("Failed to create maintenance plan in Cumulocity: " + e.getMessage(), e);
         }
     }
@@ -245,10 +249,6 @@ public class MaintenancePlanService {
 
     // --- Standard CRUD Methods ---
 
-    public MaintenancePlanListResponse getAllMaintenancePlans(Boolean active, DateTime from, DateTime to, Integer size, Integer page, boolean total) {
-        MaintenancePlanListResponse response = new MaintenancePlanListResponse();
-        response.setPlans(new ArrayList<>());
-        return response;
     /**
      * Retrieves all maintenance plans with optional filtering and pagination.
      *
@@ -265,7 +265,7 @@ public class MaintenancePlanService {
                                                               DateTime endDate, Integer pageSize,
                                                               Integer pageNumber, Boolean withTotalPages) {
         log.info("getAllMaintenancePlans(active: {}, startDate: {}, endDate: {}, pageSize: {}, pageNumber: {}, withTotalPages: {})",
-                 active, startDate, endDate, pageSize, pageNumber, withTotalPages);
+                active, startDate, endDate, pageSize, pageNumber, withTotalPages);
 
         // Set default values
         pageSize = pageSize != null ? pageSize : 5;
@@ -293,9 +293,9 @@ public class MaintenancePlanService {
 
             // Apply filters
             List<MaintenancePlan> filteredPlans = allMaintenancePlans.stream()
-                .filter(plan -> filterByActive(plan, active))
-                .filter(plan -> filterByDateRange(plan, startDate, endDate))
-                .collect(Collectors.toList());
+                    .filter(plan -> filterByActive(plan, active))
+                    .filter(plan -> filterByDateRange(plan, startDate, endDate))
+                    .collect(Collectors.toList());
 
             // Apply pagination
             int totalElements = filteredPlans.size();
@@ -331,14 +331,6 @@ public class MaintenancePlanService {
         }
     }
 
-    /**
-     * Filters maintenance plans by active status.
-     *
-     * @param plan the maintenance plan to check
-     * @param active the active status filter (null means no filter)
-     * @return true if plan matches filter criteria
-     * @since 1.0.0
-     */
     private boolean filterByActive(MaintenancePlan plan, Boolean active) {
         if (active == null) {
             return true; // No filter applied
@@ -346,37 +338,20 @@ public class MaintenancePlanService {
         return active.equals(plan.getActive());
     }
 
-    /**
-     * Filters maintenance plans by date range.
-     *
-     * @param plan the maintenance plan to check
-     * @param startDate the start date filter (null means no filter)
-     * @param endDate the end date filter (null means no filter)
-     * @return true if plan matches filter criteria
-     * @since 1.0.0
-     */
     private boolean filterByDateRange(MaintenancePlan plan, DateTime startDate, DateTime endDate) {
         if (startDate != null && plan.getStartDate() != null) {
             if (plan.getStartDate().isBefore(startDate)) {
                 return false;
             }
         }
-
         if (endDate != null && plan.getEndDate() != null) {
             if (plan.getEndDate().isAfter(endDate)) {
                 return false;
             }
         }
-
         return true;
     }
 
-    /**
-     * Validate maintenance plan create data
-     *
-     * @param maintenancePlanCreate The maintenance plan to validate
-     * @throws IllegalArgumentException if validation fails
-     */
     private void validateMaintenancePlanCreate(MaintenancePlanCreate maintenancePlanCreate) {
         if (maintenancePlanCreate.getName() == null || maintenancePlanCreate.getName().trim().isEmpty()) {
             throw new IllegalArgumentException("Maintenance plan name is required");
@@ -393,7 +368,6 @@ public class MaintenancePlanService {
         if (!atLeastOneTriggerDefined) {
             throw new IllegalArgumentException("Maintenance plan validation failed: at least one trigger must be defined");
         }
-
     }
 
     /**
@@ -421,10 +395,7 @@ public class MaintenancePlanService {
             }
 
             // Convert ManagedObjectRepresentation back to MaintenancePlan using mapper
-            MaintenancePlan maintenancePlan = MaintenancePlanMapper.map2(managedObject);
-
-            log.debug("Successfully retrieved maintenance plan with ID: {}", id);
-            return maintenancePlan;
+            return MaintenancePlanMapper.map2(managedObject);
 
         } catch (SDKException e) {
             log.error("Failed to retrieve maintenance plan with ID: {}", id, e);
@@ -435,11 +406,6 @@ public class MaintenancePlanService {
         }
     }
 
-    public MaintenancePlan createMaintenancePlan(MaintenancePlanCreate request) {
-        MaintenancePlan plan = new MaintenancePlan();
-        plan.setName(request.getName());
-        return plan;
-    }
     /**
      * Updates an existing maintenance plan by replacing all fields.
      *
@@ -451,24 +417,22 @@ public class MaintenancePlanService {
      * @since 1.0.0
      */
     public MaintenancePlan updateMaintenancePlan(String id, MaintenancePlan maintenancePlan) {
-        if(validateMaintenancePlan(maintenancePlan) == false) {
+        if (!validateMaintenancePlan(maintenancePlan)) {
             return null; // Validation failed, return null
         }
 
-    public MaintenancePlan getMaintenancePlan(Integer id) {
-        MaintenancePlan plan = new MaintenancePlan();
-        plan.setId(id);
-        return plan;
         log.info("updateMaintenancePlan(id: {}, maintenancePlan: {})", id, maintenancePlan.toString());
 
         try {
-
             // Validate that the ID in the maintenance plan matches the provided ID
-            maintenancePlan.setId(id); // Ensure ID is set for update
+            maintenancePlan.setId(id);
 
             // Create mapper and convert to ManagedObjectRepresentation
             MaintenancePlanMapper mapper = MaintenancePlanMapper.map2(maintenancePlan);
             ManagedObjectRepresentation managedObject = mapper.getManagedObject();
+
+            // Ensure ID is set on the managed object for update
+            managedObject.setId(GId.asGId(id));
 
             // Update in Cumulocity inventory
             ManagedObjectRepresentation updatedObject = inventoryApi.update(managedObject);
@@ -488,27 +452,29 @@ public class MaintenancePlanService {
         }
     }
 
-    public MaintenancePlan updateMaintenancePlan(Integer id, MaintenancePlan request) {
-        request.setId(id);
-        return request;
     public MaintenancePlan updatActivateFlag(String id, Boolean active) {
         log.info("updatActivateFlag(id: {}, active: {})", id, active);
 
         try {
-            // Get the existing maintenance plan
-            MaintenancePlanMapper maintenancePlanMapper = new MaintenancePlanMapper(id);
+            // Get the existing maintenance plan first to ensure it exists
+            MaintenancePlan existingPlan = getMaintenancePlan(id);
+            if(existingPlan == null) {
+                throw new RuntimeException("Maintenance plan with ID " + id + " not found");
+            }
 
-            // Update the active field
-            maintenancePlanMapper.setActive(active);
+            // Update active flag
+            existingPlan.setActive(active);
+
+            // Use standard mapper to convert back to MO
+            MaintenancePlanMapper mapper = MaintenancePlanMapper.map2(existingPlan);
+            ManagedObjectRepresentation moToUpdate = mapper.getManagedObject();
+            moToUpdate.setId(GId.asGId(id));
 
             // Update in Cumulocity inventory
-            ManagedObjectRepresentation updatedObject = inventoryApi.update(maintenancePlanMapper.getManagedObject());
+            ManagedObjectRepresentation updatedObject = inventoryApi.update(moToUpdate);
 
             // Convert back to MaintenancePlan using mapper
-            MaintenancePlan updatedPlan = MaintenancePlanMapper.map2(updatedObject);
-
-            log.info("Successfully updated active flag for maintenance plan with ID: {}", id);
-            return updatedPlan;
+            return MaintenancePlanMapper.map2(updatedObject);
 
         } catch (SDKException e) {
             log.error("Failed to update maintenance plan with ID: {}", id, e);
@@ -527,17 +493,15 @@ public class MaintenancePlanService {
      * @throws RuntimeException if plan not found or deletion fails
      * @since 1.0.0
      */
-    public void deleteMaintenancePlan(Integer id) {
+    public void deleteMaintenancePlan(String id) {
         log.info("Deleting plan {}", id);
         if (id == null) {
             throw new IllegalArgumentException("Maintenance plan ID cannot be null");
         }
 
-        log.debug("Deleting maintenance plan with ID: {}", id);
-
         try {
             // Delete the managed object from Cumulocity inventory
-            inventoryApi.delete(GId.asGId(id.toString()));
+            inventoryApi.delete(GId.asGId(id));
 
             log.info("Successfully deleted maintenance plan with ID: {}", id);
 
@@ -582,6 +546,8 @@ public class MaintenancePlanService {
             log.warn("Maintenance plan validation failed: at least one trigger must be defined");
             return false;
         }
+        return true;
+    }
 
     // Kept for backward compatibility if needed, but proposeMaintenancePlan handles this internally now.
     public boolean isPromptRelevant(String userPrompt) {
@@ -652,10 +618,7 @@ public class MaintenancePlanService {
                 throw new RuntimeException("Maintenance plan with ID " + id + " not found");
             }
 
-            DeviceAssignmentCriteria deviceAssignment = maintenancePlan.getApply();
-
-            log.debug("Successfully retrieved device assignment for maintenance plan with ID: {}", id);
-            return deviceAssignment;
+            return maintenancePlan.getApply();
 
         } catch (Exception e) {
             log.error("Failed to retrieve device assignment for maintenance plan with ID: {}", id, e);
@@ -698,5 +661,4 @@ public class MaintenancePlanService {
             throw new RuntimeException("Failed to delete device assignment: " + e.getMessage(), e);
         }
     }
-
 }

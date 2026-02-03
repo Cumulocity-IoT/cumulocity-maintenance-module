@@ -1,7 +1,5 @@
 package cumulocity.microservice.maintenancemodule.service.c8y;
 
-import java.util.List;
-
 import org.joda.time.DateTime;
 import org.springframework.stereotype.Service;
 
@@ -15,7 +13,7 @@ import com.cumulocity.sdk.client.alarm.AlarmFilter;
 import com.cumulocity.sdk.client.event.EventApi;
 import com.cumulocity.sdk.client.inventory.InventoryApi;
 
-import c8y.RequiredAvailability;
+import cumulocity.microservice.maintenancemodule.model.RequiredAvailability; // ADD THIS
 import cumulocity.microservice.maintenancemodule.model.MaintenanceAction;
 import cumulocity.microservice.maintenancemodule.model.MaintenanceAction.MaintenanceStatus;
 import lombok.extern.slf4j.Slf4j;
@@ -23,16 +21,16 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Service
 public class MaintenanceActionService {
-    
+
+    // Local constants to ensure compilation without modifying Mapper
     private static final String EVENT_TYPE_MAINTENANCE = "c8y_MaintenanceActionEvent";
-
     private static final String FRAGMENT_STATUS_MAINTENANCE = "ma_Status";
+    private static final String DEVICE_LAST_MAINTENANCE = "c8y_LastMaintenance";
+    private static final String ALARM_TYPE = "c8y_MaintenanceAlarm";
 
-    private InventoryApi inventoryApi;
-
-    private EventApi eventApi;
-
-    private AlarmApi alarmApi;
+    private final InventoryApi inventoryApi;
+    private final EventApi eventApi;
+    private final AlarmApi alarmApi;
 
     public MaintenanceActionService(InventoryApi inventoryApi, EventApi eventApi, AlarmApi alarmApi) {
         this.inventoryApi = inventoryApi;
@@ -42,6 +40,12 @@ public class MaintenanceActionService {
 
     public MaintenanceAction createMaintenanceAction(MaintenanceAction maintenanceAction) {
         log.info("Creating maintenance action: {}", maintenanceAction);
+
+        if (maintenanceAction.getStatus() == null) {
+            log.warn("Maintenance action has no status");
+            return null;
+        }
+
         switch (maintenanceAction.getStatus()) {
             case SCHEDULED:
                 log.info("Maintenance action scheduled for device: {}", maintenanceAction.getDeviceId());
@@ -56,7 +60,7 @@ public class MaintenanceActionService {
                 log.info("Maintenance action cancelled for device: {}", maintenanceAction.getDeviceId());
                 return createCancelledAction(maintenanceAction);
             default:
-                log.warn("Unknown maintenance action status: {}", maintenanceAction.getStatus());    
+                log.warn("Unknown maintenance action status: {}", maintenanceAction.getStatus());
                 return null;
         }
     }
@@ -91,14 +95,14 @@ public class MaintenanceActionService {
     private void createEvent(MaintenanceAction maintenanceAction) {
         ManagedObjectRepresentation device = new ManagedObjectRepresentation();
         device.setId(new GId(maintenanceAction.getDeviceId()));
-        
+
         EventRepresentation event = new EventRepresentation();
         event.setDateTime(new DateTime());
         event.setText(maintenanceAction.getNotification() != null ? maintenanceAction.getNotification() : "Maintenance action: " + maintenanceAction.getStatus());
         event.setType(EVENT_TYPE_MAINTENANCE);
         event.setSource(device);
         event.set(maintenanceAction.getStatus().name(), FRAGMENT_STATUS_MAINTENANCE);
-        
+
         try {
             eventApi.create(event);
         } catch (SDKException e) {
@@ -108,33 +112,39 @@ public class MaintenanceActionService {
 
     private void updateMaintenanceMode(String deviceId, MaintenanceStatus status) {
         try {
-            ManagedObjectRepresentation currentDevice = inventoryApi.get(GId.asGId(deviceId)); 
+            ManagedObjectRepresentation currentDevice = inventoryApi.get(GId.asGId(deviceId));
             RequiredAvailability currentRequiredAvailability = currentDevice.get(RequiredAvailability.class);
-            ManagedObjectRepresentation device = new ManagedObjectRepresentation();
-            device.setId(new GId(deviceId));
+
+            ManagedObjectRepresentation deviceUpdate = new ManagedObjectRepresentation();
+            deviceUpdate.setId(new GId(deviceId));
             boolean needUpdate = false;
 
-            if(currentRequiredAvailability != null) {
-                log.warn("Device does not have RequiredAvailability fragment, cannot update maintenance mode for device: {}", deviceId);
+            // Logic corrected: Only update availability if the fragment exists
+            if (currentRequiredAvailability != null) {
                 int currentResponseInterval = currentRequiredAvailability.getResponseInterval();
                 RequiredAvailability availability = new RequiredAvailability();
-                if(MaintenanceStatus.IN_PROGRESS.equals(status)) {
+
+                if (MaintenanceStatus.IN_PROGRESS.equals(status)) {
+                    // Set negative interval to indicate maintenance mode (standard C8Y pattern)
                     availability.setResponseInterval(-Math.abs(currentResponseInterval));
                 } else {
+                    // Restore positive interval
                     availability.setResponseInterval(Math.abs(currentResponseInterval));
                 }
-                device.set(availability);
+                deviceUpdate.set(availability);
                 needUpdate = true;
+            } else {
+                log.warn("Device {} does not have RequiredAvailability fragment, skipping maintenance mode update", deviceId);
             }
 
-            if(MaintenanceStatus.COMPLETED.equals(status)) {
+            if (MaintenanceStatus.COMPLETED.equals(status)) {
                 log.info("Setting last maintenance date for device: {}", deviceId);
-                device.set(new DateTime(), MaintenancePlanMapper.DEVICE_LAST_MAINTENANCE);
+                deviceUpdate.set(new DateTime(), DEVICE_LAST_MAINTENANCE);
                 needUpdate = true;
             }
 
-            if(needUpdate) {
-                inventoryApi.update(device);
+            if (needUpdate) {
+                inventoryApi.update(deviceUpdate);
             }
         } catch (SDKException e) {
             log.error("Error updating maintenance mode for device: {}", deviceId, e);
@@ -144,15 +154,20 @@ public class MaintenanceActionService {
     private void updateMaintenanceAlarm(String deviceId, CumulocityAlarmStatuses fromStatus, CumulocityAlarmStatuses toStatus) {
         try {
             AlarmFilter alarmFilter = new AlarmFilter();
-            alarmFilter.bySource(GId.asGId(deviceId)).byStatus(fromStatus).byType(MaintenancePlanMapper.ALARM_TYPE);
+            alarmFilter.bySource(GId.asGId(deviceId))
+                    .byStatus(fromStatus)
+                    .byType(ALARM_TYPE);
 
-            alarmApi.getAlarmsByFilter(alarmFilter).get(20).forEach(alarm -> {
-                alarm.setStatus(toStatus.name());
-                alarmApi.update(alarm);
-            });
+            // Corrected: Added .getAlarms() to iterate correctly over the paged result
+            alarmApi.getAlarmsByFilter(alarmFilter)
+                    .get(20)
+                    .getAlarms()
+                    .forEach(alarm -> {
+                        alarm.setStatus(toStatus.name());
+                        alarmApi.update(alarm);
+                    });
         } catch (SDKException e) {
             log.error("Error updating maintenance alarm for device: {}", deviceId, e);
         }
     }
-
 }
