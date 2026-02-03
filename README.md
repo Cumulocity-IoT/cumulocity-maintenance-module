@@ -7,7 +7,7 @@ It also provides an API to notify about maintenance actions.
 
 ### Time-based Maintenance (TBM)
 
-• Maintenance performed at regular time intervals (e.g., every 6 months).
+• Maintenance performed at regular time intervals (e.g., every 30 days).
 
 • Often used for components with predictable wear patterns.
 
@@ -24,7 +24,7 @@ Example:
   "endDate": "2026-10-02T00:00:00Z",
   "active": true,
   "onTime": {
-      "interval": "P30D"
+    "cronExpression": "0 0 0 */30 * *"
   },
   "apply": {
     "idsInternal": ["383901"]
