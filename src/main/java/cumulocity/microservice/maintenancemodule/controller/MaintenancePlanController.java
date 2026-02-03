@@ -1,11 +1,13 @@
 package cumulocity.microservice.maintenancemodule.controller;
 
+import java.util.Map;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -19,6 +21,8 @@ import org.springframework.web.bind.annotation.RestController;
 import cumulocity.microservice.maintenancemodule.model.MaintenancePlan;
 import cumulocity.microservice.maintenancemodule.model.MaintenancePlanCreate;
 import cumulocity.microservice.maintenancemodule.model.MaintenancePlanListResponse;
+import cumulocity.microservice.maintenancemodule.model.MaintenancePlanProposal;
+import cumulocity.microservice.maintenancemodule.service.c8y.MaintenancePlanService;
 import cumulocity.microservice.maintenancemodule.service.c8y.MaintenancePlanService;
 
 /**
@@ -48,6 +52,21 @@ public class MaintenancePlanController {
      * @param pageNumber Number of items to skip (default: 0)
      * @return List of maintenance plans with pagination information
      */
+    @PostMapping(path = "/ai", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> proposeMaintenancePlan(@RequestBody Map<String, String> body) {
+        String prompt = body.get("userprompt");
+        if (prompt == null || prompt.isBlank()) return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+
+        try {
+            MaintenancePlanProposal proposal = maintenancePlanService.proposeMaintenancePlan(prompt);
+            return new ResponseEntity<>(proposal, HttpStatus.OK);
+        } catch (IllegalArgumentException e) {
+            return new ResponseEntity<>(Map.of("error", e.getMessage()), HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<MaintenancePlanListResponse> getAllMaintenancePlans(
             @RequestParam(required = false) Boolean active,
@@ -66,6 +85,7 @@ public class MaintenancePlanController {
             pageNumber = 0;
         }
 
+        MaintenancePlanListResponse response = maintenancePlanService.getAllMaintenancePlans(active, startDate, endDate, pageSize, pageNumber, false);
         MaintenancePlanListResponse response = maintenancePlanService.getAllMaintenancePlans(
                 active, startDate, endDate, pageSize, pageNumber, false);
 
@@ -79,6 +99,7 @@ public class MaintenancePlanController {
      * @return The created maintenance plan with generated ID
      */
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<MaintenancePlan> createMaintenancePlan(@RequestBody MaintenancePlanCreate maintenancePlanCreate) {
     public ResponseEntity<MaintenancePlan> createMaintenancePlan(
             @RequestBody MaintenancePlanCreate maintenancePlanCreate) {
 
@@ -94,6 +115,7 @@ public class MaintenancePlanController {
      * @return The maintenance plan if found
      */
     @GetMapping(path = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<MaintenancePlan> getMaintenancePlan(@PathVariable Integer id) {
     public ResponseEntity<MaintenancePlan> getMaintenancePlan(@PathVariable String id) {
 
         MaintenancePlan maintenancePlan = maintenancePlanService.getMaintenancePlan(id);
@@ -113,6 +135,7 @@ public class MaintenancePlanController {
      * @return The updated maintenance plan
      */
     @PutMapping(path = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<MaintenancePlan> updateMaintenancePlan(@PathVariable Integer id, @RequestBody MaintenancePlan maintenancePlan) {
     public ResponseEntity<MaintenancePlan> updateMaintenancePlan(
             @PathVariable String id,
             @RequestBody MaintenancePlan maintenancePlan) {
@@ -133,6 +156,7 @@ public class MaintenancePlanController {
      * @return Empty response with 204 status
      */
     @DeleteMapping(path = "/{id}")
+    public ResponseEntity<Void> deleteMaintenancePlan(@PathVariable Integer id) {
     public ResponseEntity<Void> deleteMaintenancePlan(@PathVariable String id) {
 
         maintenancePlanService.deleteMaintenancePlan(id);

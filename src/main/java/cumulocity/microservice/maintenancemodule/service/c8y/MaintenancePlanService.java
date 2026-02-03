@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.joda.time.DateTime;
 import com.cumulocity.rest.representation.PageStatisticsRepresentation;
 import com.cumulocity.rest.representation.inventory.ManagedObjectRepresentation;
 import com.cumulocity.sdk.client.inventory.InventoryApi;
@@ -68,12 +69,23 @@ public class MaintenancePlanService {
         }
         """;
 
+    private static final String SYSTEM_PROMPT = """
+        You are a generic Maintenance Planning Assistant.
+        
+        RULES:
+        1. You must ONLY generate maintenance plans.
+        2. If the user prompt is not related to maintenance, equipment, or machinery, return: {"error": "Irrelevant prompt"}.
+        3. Output MUST be valid JSON matching this schema:
+        %s
+        """.formatted(JSON_SCHEMA);
+
     @Autowired
     public MaintenancePlanService(
             InventoryApi inventoryApi,
             ChatClient.Builder chatClientBuilder,
             ObjectMapper objectMapper,
             @Value("classpath:maintenance_schema.json") Resource schemaResource) {
+            @Value("classpath:maintenance_schema.json") Resource schemaResource) throws IOException {
 
         this.inventoryApi = inventoryApi;
         this.chatClient = chatClientBuilder.build();
@@ -81,12 +93,14 @@ public class MaintenancePlanService {
 
         String schemaContent = "{}";
         if (schemaResource.exists()) {
+            this.maintenanceSchemaJson = schemaResource.getContentAsString(StandardCharsets.UTF_8);
             try {
                 schemaContent = schemaResource.getContentAsString(StandardCharsets.UTF_8);
             } catch (IOException e) {
                 log.warn("Failed to read maintenance_schema.json", e);
             }
         } else {
+            this.maintenanceSchemaJson = "{}";
             log.warn("maintenance_schema.json not found in classpath");
         }
         this.maintenanceSchemaJson = schemaContent;
@@ -123,10 +137,14 @@ public class MaintenancePlanService {
     }
 
     /**
+     * Generates a maintenance plan proposal.
      * Generates a maintenance plan proposal using AI.
      * Uses Single-Shot Prompting: The Schema and Guarding rules are sent in one go.
      */
     public MaintenancePlanProposal proposeMaintenancePlan(String userPrompt) {
+
+        //
+
         // 1. Construct the System Prompt with Guarding, Data Rules & Schema
         String systemInstructions = """
             You are a maintenance planning assistant.
@@ -249,6 +267,10 @@ public class MaintenancePlanService {
 
     // --- Standard CRUD Methods ---
 
+    public MaintenancePlanListResponse getAllMaintenancePlans(Boolean active, DateTime from, DateTime to, Integer size, Integer page, boolean total) {
+        MaintenancePlanListResponse response = new MaintenancePlanListResponse();
+        response.setPlans(new ArrayList<>());
+        return response;
     /**
      * Retrieves all maintenance plans with optional filtering and pagination.
      *
@@ -338,6 +360,10 @@ public class MaintenancePlanService {
         return active.equals(plan.getActive());
     }
 
+    public MaintenancePlan createMaintenancePlan(MaintenancePlanCreate request) {
+        MaintenancePlan plan = new MaintenancePlan();
+        plan.setName(request.getName());
+        return plan;
     private boolean filterByDateRange(MaintenancePlan plan, DateTime startDate, DateTime endDate) {
         if (startDate != null && plan.getStartDate() != null) {
             if (plan.getStartDate().isBefore(startDate)) {
@@ -352,11 +378,20 @@ public class MaintenancePlanService {
         return true;
     }
 
+    public MaintenancePlan getMaintenancePlan(Integer id) {
+        MaintenancePlan plan = new MaintenancePlan();
+        plan.setId(id);
+        return plan;
+    }
     private void validateMaintenancePlanCreate(MaintenancePlanCreate maintenancePlanCreate) {
         if (maintenancePlanCreate.getName() == null || maintenancePlanCreate.getName().trim().isEmpty()) {
             throw new IllegalArgumentException("Maintenance plan name is required");
         }
 
+    public MaintenancePlan updateMaintenancePlan(Integer id, MaintenancePlan request) {
+        request.setId(id);
+        return request;
+    }
         if (maintenancePlanCreate.getStartDate() != null && maintenancePlanCreate.getEndDate() != null) {
             if (maintenancePlanCreate.getStartDate().isAfter(maintenancePlanCreate.getEndDate())) {
                 throw new IllegalArgumentException("Start date must be before end date");
@@ -494,6 +529,7 @@ public class MaintenancePlanService {
      * @since 1.0.0
      */
     public void deleteMaintenancePlan(String id) {
+    public void deleteMaintenancePlan(Integer id) {
         log.info("Deleting plan {}", id);
         if (id == null) {
             throw new IllegalArgumentException("Maintenance plan ID cannot be null");

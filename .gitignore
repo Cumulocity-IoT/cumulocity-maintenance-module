@@ -5,6 +5,7 @@
 
 # Java related ignores
 target/
+application-local.properties
 *.class
 *.jar
 
