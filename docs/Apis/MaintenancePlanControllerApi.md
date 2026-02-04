@@ -4,10 +4,39 @@ All URIs are relative to *http://localhost:8080*
 
 | Method | HTTP request | Description |
 |------------- | ------------- | -------------|
+| [**createMaintenanceAction**](MaintenancePlanControllerApi.md#createMaintenanceAction) | **POST** /api/maintenance/plans/{id}/actions | Create a new maintenance action for maintenance plan |
 | [**createMaintenancePlan**](MaintenancePlanControllerApi.md#createMaintenancePlan) | **POST** /api/maintenance/plans | Create a new maintenance plan |
 | [**getActiveMaintenancePlansByType**](MaintenancePlanControllerApi.md#getActiveMaintenancePlansByType) | **GET** /api/maintenance/plans | Get all active maintenance plans with optional filtering and pagination |
 | [**getMaintenancePlan**](MaintenancePlanControllerApi.md#getMaintenancePlan) | **GET** /api/maintenance/plans/{id} | GET maintenance plan by Id |
 
+
+<a name="createMaintenanceAction"></a>
+# **createMaintenanceAction**
+> MaintenanceAction createMaintenanceAction(id, MaintenanceAction)
+
+Create a new maintenance action for maintenance plan
+
+    Creates a new maintenance action in IoT Platform for defined maintenance plan
+
+### Parameters
+
+|Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **id** | **String**| Internal maintenance plan Id | [default to null] |
+| **MaintenanceAction** | [**MaintenanceAction**](../Models/MaintenanceAction.md)|  | |
+
+### Return type
+
+[**MaintenanceAction**](../Models/MaintenanceAction.md)
+
+### Authorization
+
+[basicAuth](../README.md#basicAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
 
 <a name="createMaintenancePlan"></a>
 # **createMaintenancePlan**

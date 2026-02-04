@@ -28,11 +28,14 @@ public class MaintenancePlanMapper {
     public static final String ALARM_TYPE = "c8y_MaintenancePlanAlarm";
     public static final String DEVICE_LAST_MAINTENANCE = "mp_LastMaintenance";
     public static final String DEVICE_NEXT_MAINTENANCE = "mp_NextMaintenance";
+    public static final String MAINTENANCE_PLAN_ID = "mp_MaintenancePlanId";
     
     public static final String MP_NAME = "mp_Name";
     public static final String MP_DESCRIPTION = "mp_Description";
     public static final String MP_NOTIFICATION_TEXT = "mp_NotificationText";
     public static final String MP_NOTIFICATION_TYPE = "mp_NotificationType";
+    public static final String MP_NOTIFICATION_CLASS = "mp_NotificationClass";
+    public static final String MP_NOTIFICATION_SEVERITY = "mp_NotificationSeverity";
     public static final String MP_START_DATE = "mp_StartDate";
     public static final String MP_END_DATE = "mp_EndDate";
     public static final String MP_ACTIVE = "mp_Active";
@@ -67,6 +70,8 @@ public class MaintenancePlanMapper {
         mapper.setConditionBasedTriggers(maintenancePlanCreate.getOnConditions());
         mapper.setUsageBasedTrigger(maintenancePlanCreate.getOnUsage());
         mapper.setTimeBasedTrigger(maintenancePlanCreate.getOnTime());
+        mapper.setNotificationClass(maintenancePlanCreate.getNotificationClass());
+        mapper.setNotificationSeverity(maintenancePlanCreate.getNotificationSeverity());
         mapper.setDeviceAssignment(maintenancePlanCreate.getApply());
         return mapper;
     }
@@ -95,6 +100,8 @@ public class MaintenancePlanMapper {
         mapper.setConditionBasedTriggers(maintenancePlan.getOnConditions());
         mapper.setUsageBasedTrigger(maintenancePlan.getOnUsage());
         mapper.setTimeBasedTrigger(maintenancePlan.getOnTime());
+        mapper.setNotificationClass(maintenancePlan.getNotificationClass());
+        mapper.setNotificationSeverity(maintenancePlan.getNotificationSeverity());
         mapper.setDeviceAssignment(maintenancePlan.getApply());
         return mapper;
     }
@@ -111,6 +118,8 @@ public class MaintenancePlanMapper {
         maintenancePlan.setDescription(mapper.getDescription());
         maintenancePlan.setNotificationText(mapper.getNotificationText());
         maintenancePlan.setNotificationType(mapper.getNotificationType());
+        maintenancePlan.setNotificationClass(mapper.getNotificationClass());
+        maintenancePlan.setNotificationSeverity(mapper.getNotificationSeverity());
         maintenancePlan.setStartDate(mapper.getStartDate());
         maintenancePlan.setEndDate(mapper.getEndDate());
         maintenancePlan.setActive(mapper.getActive());
@@ -172,6 +181,36 @@ public class MaintenancePlanMapper {
             return;
         }
         managedObject.set(description, MP_DESCRIPTION);
+    }
+
+    public MaintenancePlan.MaintenanceNotificationClass getNotificationClass() {
+        Object notificationClass = managedObject.get(MP_NOTIFICATION_CLASS);
+        if (notificationClass instanceof String) {
+            return MaintenancePlan.MaintenanceNotificationClass.valueOf((String) notificationClass);
+        }
+        return null;
+    } 
+
+    public void setNotificationClass(MaintenancePlan.MaintenanceNotificationClass notificationClass) {
+        if (notificationClass == null) {
+            return;
+        }
+        managedObject.set(notificationClass.name(), MP_NOTIFICATION_CLASS);
+    }
+
+    public MaintenancePlan.MaintenanceNotificationSeverity getNotificationSeverity() {
+        Object notificationSeverity = managedObject.get(MP_NOTIFICATION_SEVERITY);
+        if (notificationSeverity instanceof String) {
+            return MaintenancePlan.MaintenanceNotificationSeverity.valueOf((String) notificationSeverity);
+        }
+        return null;
+    }
+
+    public void setNotificationSeverity(MaintenancePlan.MaintenanceNotificationSeverity notificationSeverity) {
+        if (notificationSeverity == null) {
+            return;
+        }
+        managedObject.set(notificationSeverity.name(), MP_NOTIFICATION_SEVERITY);
     }
     
     /**

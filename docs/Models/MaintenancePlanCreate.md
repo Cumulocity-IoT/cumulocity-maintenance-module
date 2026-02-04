@@ -5,8 +5,10 @@
 |------------ | ------------- | ------------- | -------------|
 | **name** | **String** | The name of the maintenance plan | [default to null] |
 | **description** | **String** | Detailed description of the maintenance plan | [optional] [default to null] |
+| **notificationClass** | **String** | Maintenance notification class which initializes the maintenance notification class | [default to null] |
 | **notificationText** | **String** | Maintenance text which can be used to initialize the maintenance alarm text | [optional] [default to null] |
 | **notificationType** | **String** | Maintenance type which can be used to initialize the maintenance alarm type | [optional] [default to null] |
+| **notificationSeverity** | **String** | Maintenance severity which can be used to initialize the maintenance notification severity | [optional] [default to null] |
 | **startDate** | **Date** | Start date and time for the maintenance | [default to null] |
 | **endDate** | **Date** | End date and time for the maintenance | [default to null] |
 | **active** | **Boolean** | Indicates whether the maintenance plan is active | [optional] [default to null] |

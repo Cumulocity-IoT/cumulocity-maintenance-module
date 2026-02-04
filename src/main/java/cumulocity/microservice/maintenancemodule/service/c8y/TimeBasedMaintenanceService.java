@@ -65,7 +65,20 @@ public class TimeBasedMaintenanceService {
                     Set<ManagedObjectRepresentation> devices = maintenancePlanApplyService.getAllAppliedDevices(maintenancePlanUpdated);
                     log.info("Maintenance plan {} applies to {} devices", maintenancePlanUpdated.getName(), devices.size());
                     for (ManagedObjectRepresentation device : devices) {
-                        checkAndCreateMaintenanceAlarm(device, maintenancePlanUpdated);
+                        switch(maintenancePlanUpdated.getNotificationClass()) {
+                            case ALARM:
+                                log.info("Processing device {} for maintenance plan {} with ALARM notification class", device.getId().getValue(), maintenancePlanUpdated.getName());
+                                checkAndCreateMaintenanceAlarm(device, maintenancePlanUpdated);
+                                break;
+                            case EVENT:
+                                log.info("Processing device {} for maintenance plan {} with EVENT notification class", device.getId().getValue(), maintenancePlanUpdated.getName());
+                                checkAndCreateMaintenanceEvent(device, maintenancePlanUpdated);
+                                break;
+                            default:
+                                log.warn("Unknown notification class {} for maintenance plan {}", maintenancePlanUpdated.getNotificationClass(), maintenancePlanUpdated.getName());
+                                continue;
+                        }
+
                     }
                 }
                 log.info("time-based maintenance devices processed");
@@ -76,6 +89,12 @@ public class TimeBasedMaintenanceService {
             return Boolean.FALSE;
         });
         return callWithinContext;
+    }
+
+    private void checkAndCreateMaintenanceEvent(ManagedObjectRepresentation device,
+            MaintenancePlan maintenancePlanUpdated) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'checkAndCreateMaintenanceEvent'");
     }
 
     private MaintenancePlan checkAndUpdateActivateFlag(MaintenancePlan maintenancePlan) {
@@ -154,9 +173,7 @@ public class TimeBasedMaintenanceService {
         DateTime currentTime = new DateTime();
         if(currentTime.isAfter(nextMaintenance) || currentTime.isEqual(nextMaintenance)) {
             log.info("Maintenance is DUE for device {}", device.getId().getValue());
-            if("alarm".equals(maintenancePlan.getNotificationType())) {
-                createAlarmNotification(device, maintenancePlan, nextMaintenance);
-            }
+            createAlarmNotification(device, maintenancePlan, nextMaintenance, lastMaintenance);
         } else {
             log.info("Maintenance is NOT yet due for device {}", device.getId().getValue());
         }
@@ -187,14 +204,17 @@ public class TimeBasedMaintenanceService {
         }
     }
 
-    private AlarmRepresentation createAlarmNotification(ManagedObjectRepresentation device, MaintenancePlan maintenancePlan, DateTime nextMaintenance) {
+    private AlarmRepresentation createAlarmNotification(ManagedObjectRepresentation device, MaintenancePlan maintenancePlan, DateTime nextMaintenance, DateTime lastMaintenance) {
         AlarmRepresentation alarm = new AlarmRepresentation();
         alarm.setSource(device);
-        alarm.setType(MaintenancePlanMapper.ALARM_TYPE);
+        alarm.setType(maintenancePlan.getNotificationType() != null ? maintenancePlan.getNotificationType() : MaintenancePlanMapper.ALARM_TYPE);
         alarm.setStatus("ACTIVE");
-        alarm.setSeverity("MAJOR");
-        alarm.setText("Maintenance is due, planned maintenance: " + nextMaintenance + " as per maintenance plan " + maintenancePlan.getName());
+        alarm.setSeverity(maintenancePlan.getNotificationSeverity() != null ? maintenancePlan.getNotificationSeverity().name() : "MAJOR");
+        alarm.setText(maintenancePlan.getNotificationText() != null ? maintenancePlan.getNotificationText() : maintenancePlan.getName() + " is due for device ");
         alarm.setDateTime(new DateTime());
+        alarm.set(nextMaintenance, MaintenancePlanMapper.DEVICE_NEXT_MAINTENANCE);
+        alarm.set(lastMaintenance, MaintenancePlanMapper.DEVICE_LAST_MAINTENANCE);
+        alarm.set(maintenancePlan.getId(), MaintenancePlanMapper.MAINTENANCE_PLAN_ID);
         return alarmApi.create(alarm);
     }
 

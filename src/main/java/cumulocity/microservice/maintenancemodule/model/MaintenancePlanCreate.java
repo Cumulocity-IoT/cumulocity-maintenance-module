@@ -8,6 +8,8 @@ import jakarta.validation.constraints.NotNull;
 import org.joda.time.DateTime;
 import org.springframework.validation.annotation.Validated;
 
+import cumulocity.microservice.maintenancemodule.model.MaintenancePlan.MaintenanceNotificationClass;
+import cumulocity.microservice.maintenancemodule.model.MaintenancePlan.MaintenanceNotificationSeverity;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -36,11 +38,19 @@ public class MaintenancePlanCreate {
     @Schema(description = "Detailed description of the maintenance plan", example = "Monthly maintenance check for all production equipment")
     private String description;
 
+    @Schema(description = "Maintenance notification class which initializes the maintenance notification class", example = "ALARM")
+    @NotNull
+    @NonNull
+    private MaintenanceNotificationClass notificationClass;
+
     @Schema(description = "Maintenance text which can be used to initialize the maintenance alarm text")
     private String notificationText;
 
     @Schema(description = "Maintenance type which can be used to initialize the maintenance alarm type")
     private String notificationType;
+
+    @Schema(description = "Maintenance severity which can be used to initialize the maintenance notification severity", example = "CRITICAL")
+    private MaintenanceNotificationSeverity notificationSeverity;
 
     @Schema(required = true, description = "Start date and time for the maintenance", example = "2025-01-01T09:00:00Z")
     @NotNull

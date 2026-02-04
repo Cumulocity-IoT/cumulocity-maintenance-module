@@ -7,8 +7,8 @@ All URIs are relative to *http://localhost:8080*
 
 | Class | Method | HTTP request | Description |
 |------------ | ------------- | ------------- | -------------|
-| *MaintenanceActionControllerApi* | [**createMaintenanceAction**](Apis/MaintenanceActionControllerApi.md#createMaintenanceAction) | **POST** /api/maintenance/actions | Create a new maintenance action |
-| *MaintenancePlanControllerApi* | [**createMaintenancePlan**](Apis/MaintenancePlanControllerApi.md#createMaintenancePlan) | **POST** /api/maintenance/plans | Create a new maintenance plan |
+| *MaintenancePlanControllerApi* | [**createMaintenanceAction**](Apis/MaintenancePlanControllerApi.md#createMaintenanceAction) | **POST** /api/maintenance/plans/{id}/actions | Create a new maintenance action for maintenance plan |
+*MaintenancePlanControllerApi* | [**createMaintenancePlan**](Apis/MaintenancePlanControllerApi.md#createMaintenancePlan) | **POST** /api/maintenance/plans | Create a new maintenance plan |
 *MaintenancePlanControllerApi* | [**getActiveMaintenancePlansByType**](Apis/MaintenancePlanControllerApi.md#getActiveMaintenancePlansByType) | **GET** /api/maintenance/plans | Get all active maintenance plans with optional filtering and pagination |
 *MaintenancePlanControllerApi* | [**getMaintenancePlan**](Apis/MaintenancePlanControllerApi.md#getMaintenancePlan) | **GET** /api/maintenance/plans/{id} | GET maintenance plan by Id |
 

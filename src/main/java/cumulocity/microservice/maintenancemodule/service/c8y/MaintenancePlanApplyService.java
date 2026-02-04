@@ -50,6 +50,10 @@ public class MaintenancePlanApplyService {
     }
 
     private List<ManagedObjectRepresentation> getDevicesByIds(List<String> deviceIds) {
+        if(deviceIds == null || deviceIds.isEmpty()) {
+            return new ArrayList<>();
+        }
+
         List<ManagedObjectRepresentation> devices = new ArrayList<>();
         for (String id : deviceIds) {
             log.info("Getting device by ID: {}", id);
@@ -65,6 +69,9 @@ public class MaintenancePlanApplyService {
     }
 
     private List<ManagedObjectRepresentation> getDevicesBySerial(List<String> serialNumbers) {
+        if(serialNumbers == null || serialNumbers.isEmpty()) {
+            return new ArrayList<>();
+        }
         List<ManagedObjectRepresentation> devices = new ArrayList<>();
         for (String serial : serialNumbers) {
             log.info("Getting device by serial number: {}", serial);
@@ -82,6 +89,9 @@ public class MaintenancePlanApplyService {
     }
 
     private List<ManagedObjectRepresentation> getDevicesByType(List<String> deviceTypes) {
+        if(deviceTypes == null || deviceTypes.isEmpty()) {
+            return new ArrayList<>();
+        }
         List<ManagedObjectRepresentation> devices = new ArrayList<>();
         for (String type : deviceTypes) {
             log.info("Getting devices by type: {}", type);
@@ -93,6 +103,9 @@ public class MaintenancePlanApplyService {
     }
 
     private List<ManagedObjectRepresentation> getDevicesByQuery(String query) {
+        if(query == null || query.isEmpty()) {
+            return new ArrayList<>();
+        }
         List<ManagedObjectRepresentation> devices = new ArrayList<>();
         log.info("Getting devices by query: {}", query);
         QueryParam queryParam = CustomQueryParam.QUERY.setValue(query).toQueryParam();

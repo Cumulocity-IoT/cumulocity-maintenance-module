@@ -94,12 +94,21 @@
         }
       }
     },
-    "/api/maintenance/actions" : {
+    "/api/maintenance/plans/{id}/actions" : {
       "post" : {
-        "tags" : [ "maintenance-action-controller" ],
-        "summary" : "Create a new maintenance action",
-        "description" : "Creates a new maintenance action in IoT Platform",
+        "tags" : [ "maintenance-plan-controller" ],
+        "summary" : "Create a new maintenance action for maintenance plan",
+        "description" : "Creates a new maintenance action in IoT Platform for defined maintenance plan",
         "operationId" : "createMaintenanceAction",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "description" : "Internal maintenance plan Id",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -271,6 +280,12 @@
             "description" : "Detailed description of the maintenance plan",
             "example" : "Monthly maintenance check for all production equipment"
           },
+          "notificationClass" : {
+            "type" : "string",
+            "description" : "Maintenance notification class which initializes the maintenance notification class",
+            "enum" : [ "ALARM", "EVENT" ],
+            "example" : "ALARM"
+          },
           "notificationText" : {
             "type" : "string",
             "description" : "Maintenance text which can be used to initialize the maintenance alarm text"
@@ -278,6 +293,12 @@
           "notificationType" : {
             "type" : "string",
             "description" : "Maintenance type which can be used to initialize the maintenance alarm type"
+          },
+          "notificationSeverity" : {
+            "type" : "string",
+            "description" : "Maintenance severity which can be used to initialize the maintenance notification severity",
+            "enum" : [ "CRITICAL", "MAJOR", "MINOR", "WARNING" ],
+            "example" : "CRITICAL"
           },
           "startDate" : {
             "type" : "string",
@@ -316,7 +337,7 @@
             }
           }
         },
-        "required" : [ "endDate", "name", "startDate" ]
+        "required" : [ "endDate", "name", "notificationClass", "startDate" ]
       },
       "Subscription" : {
         "type" : "object",
@@ -411,13 +432,25 @@
             "description" : "Detailed description of the maintenance plan",
             "example" : "Monthly maintenance check for all production equipment"
           },
+          "notificationClass" : {
+            "type" : "string",
+            "description" : "Maintenance notification class which initializes the maintenance notification class",
+            "enum" : [ "ALARM", "EVENT" ],
+            "example" : "ALARM"
+          },
           "notificationText" : {
             "type" : "string",
             "description" : "Maintenance text which can be used to initialize the maintenance alarm text"
           },
           "notificationType" : {
             "type" : "string",
-            "description" : "Maintenance type which can be used to initialize the maintenance alarm type"
+            "description" : "Maintenance type which can be used to initialize the maintenance notification type"
+          },
+          "notificationSeverity" : {
+            "type" : "string",
+            "description" : "Maintenance severity which can be used to initialize the maintenance notification severity",
+            "enum" : [ "CRITICAL", "MAJOR", "MINOR", "WARNING" ],
+            "example" : "CRITICAL"
           },
           "startDate" : {
             "type" : "string",
@@ -456,7 +489,7 @@
             }
           }
         },
-        "required" : [ "id", "name", "startDate" ]
+        "required" : [ "id", "name", "notificationClass", "notificationType", "startDate" ]
       },
       "MaintenanceAction" : {
         "type" : "object",
