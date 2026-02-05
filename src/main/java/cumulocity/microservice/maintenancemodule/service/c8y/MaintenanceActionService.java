@@ -22,10 +22,6 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Service
 public class MaintenanceActionService {
-    
-    private static final String EVENT_TYPE_MAINTENANCE = "c8y_MaintenanceActionEvent";
-
-    private static final String FRAGMENT_STATUS_MAINTENANCE = "ma_Status";
 
     private InventoryApi inventoryApi;
 
@@ -68,21 +64,21 @@ public class MaintenanceActionService {
 
     private MaintenanceAction createInProgressAction(MaintenancePlan maintenancePlan, MaintenanceAction maintenanceAction) {
         createEvent(maintenanceAction, maintenancePlan);
-        updateMaintenanceMode(maintenanceAction.getDeviceId(), maintenanceAction.getStatus());
+        updateMaintenanceMode(maintenanceAction.getDeviceId(), maintenanceAction.getStatus(), maintenancePlan);
         updateMaintenanceAlarm(maintenanceAction.getDeviceId(), maintenancePlan, CumulocityAlarmStatuses.ACKNOWLEDGED, CumulocityAlarmStatuses.ACKNOWLEDGED);
         return maintenanceAction;
     }
 
     private MaintenanceAction createCompletedAction(MaintenancePlan maintenancePlan, MaintenanceAction maintenanceAction) {
         createEvent(maintenanceAction, maintenancePlan);
-        updateMaintenanceMode(maintenanceAction.getDeviceId(), maintenanceAction.getStatus());
+        updateMaintenanceMode(maintenanceAction.getDeviceId(), maintenanceAction.getStatus(), maintenancePlan);
         updateMaintenanceAlarm(maintenanceAction.getDeviceId(), maintenancePlan, CumulocityAlarmStatuses.ACKNOWLEDGED, CumulocityAlarmStatuses.CLEARED);
         return maintenanceAction;
     }
 
     private MaintenanceAction createCancelledAction(MaintenancePlan maintenancePlan, MaintenanceAction maintenanceAction) {
         createEvent(maintenanceAction, maintenancePlan);
-        updateMaintenanceMode(maintenanceAction.getDeviceId(), maintenanceAction.getStatus());
+        updateMaintenanceMode(maintenanceAction.getDeviceId(), maintenanceAction.getStatus(), maintenancePlan);
         updateMaintenanceAlarm(maintenanceAction.getDeviceId(), maintenancePlan, CumulocityAlarmStatuses.ACKNOWLEDGED, CumulocityAlarmStatuses.ACTIVE);
         return maintenanceAction;
     }
@@ -94,9 +90,9 @@ public class MaintenanceActionService {
         EventRepresentation event = new EventRepresentation();
         event.setDateTime(new DateTime());
         event.setText("Maintenance Plan: " + maintenancePlan.getName() + ", Action: " + maintenanceAction.getStatus());
-        event.setType(EVENT_TYPE_MAINTENANCE);
+        event.setType(MaintenancePlanMapper.EVENT_TYPE_MAINTENANCE+maintenancePlan.getId());
         event.setSource(device);
-        event.set(maintenanceAction.getStatus().name(), FRAGMENT_STATUS_MAINTENANCE);
+        event.set(maintenanceAction.getStatus().name(), MaintenancePlanMapper.FRAGMENT_STATUS_MAINTENANCE);
         
         try {
             eventApi.create(event);
@@ -105,7 +101,7 @@ public class MaintenanceActionService {
         }
     }
 
-    private void updateMaintenanceMode(String deviceId, MaintenanceStatus status) {
+    private void updateMaintenanceMode(String deviceId, MaintenanceStatus status, MaintenancePlan maintenancePlan) {
         try {
             ManagedObjectRepresentation currentDevice = inventoryApi.get(GId.asGId(deviceId)); 
             RequiredAvailability currentRequiredAvailability = currentDevice.get(RequiredAvailability.class);
@@ -128,7 +124,7 @@ public class MaintenanceActionService {
 
             if(MaintenanceStatus.COMPLETED.equals(status)) {
                 log.info("Setting last maintenance date for device: {}", deviceId);
-                device.set(new DateTime(), MaintenancePlanMapper.DEVICE_LAST_MAINTENANCE);
+                device.set(new DateTime(), MaintenancePlanMapper.DEVICE_LAST_MAINTENANCE+maintenancePlan.getId());
                 needUpdate = true;
             }
 
@@ -143,7 +139,7 @@ public class MaintenanceActionService {
     private void updateMaintenanceAlarm(String deviceId, MaintenancePlan maintenancePlan, CumulocityAlarmStatuses fromStatus, CumulocityAlarmStatuses toStatus) {
         try {
             AlarmFilter alarmFilter = new AlarmFilter();
-            alarmFilter.bySource(GId.asGId(deviceId)).byStatus(fromStatus).byType(maintenancePlan.getNotificationType());
+            alarmFilter.bySource(GId.asGId(deviceId)).byStatus(fromStatus).byType(MaintenancePlanMapper.ALARM_TYPE+maintenancePlan.getId());
 
             alarmApi.getAlarmsByFilter(alarmFilter).get(20).forEach(alarm -> {
                 alarm.setStatus(toStatus.name());
