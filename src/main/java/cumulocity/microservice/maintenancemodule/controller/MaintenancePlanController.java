@@ -1,7 +1,5 @@
 package cumulocity.microservice.maintenancemodule.controller;
 
-import org.joda.time.DateTime;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -10,13 +8,14 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import cumulocity.microservice.maintenancemodule.model.MaintenanceAction;
 import cumulocity.microservice.maintenancemodule.model.MaintenancePlan;
 import cumulocity.microservice.maintenancemodule.model.MaintenancePlanCreate;
 import cumulocity.microservice.maintenancemodule.model.MaintenancePlanListResponse;
 import cumulocity.microservice.maintenancemodule.model.MaintenancePlanType;
+import cumulocity.microservice.maintenancemodule.service.c8y.MaintenanceActionService;
 import cumulocity.microservice.maintenancemodule.service.c8y.MaintenancePlanService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -40,8 +39,11 @@ public class MaintenancePlanController {
 
     private final MaintenancePlanService maintenancePlanService;
 
-    public MaintenancePlanController(MaintenancePlanService maintenancePlanService) {
+    private final MaintenanceActionService maintenanceActionService;
+
+    public MaintenancePlanController(MaintenancePlanService maintenancePlanService, MaintenanceActionService maintenanceActionService) {
         this.maintenancePlanService = maintenancePlanService;
+        this.maintenanceActionService = maintenanceActionService;
     }
 
     
@@ -83,6 +85,25 @@ public class MaintenancePlanController {
         MaintenancePlan maintenancePlan = maintenancePlanService.getMaintenancePlan(id);
         
         return new ResponseEntity<>(maintenancePlan, HttpStatus.OK);
+    }
+
+    @Operation(summary = "Create a new maintenance action for maintenance plan", description = "Creates a new maintenance action in IoT Platform for defined maintenance plan", parameters = {
+            @Parameter(in = ParameterIn.PATH, name = "id", required = true, description = "Internal maintenance plan Id", schema = @Schema(type = "string")) })
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Created"),
+            @ApiResponse(responseCode = "400", description = "Bad Request") })
+    @PostMapping(path = "/{id}/actions", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<MaintenanceAction> createMaintenanceAction(
+            @PathVariable String id,
+            @RequestBody MaintenanceAction maintenanceAction) {
+        
+        MaintenancePlan maintenancePlan = maintenancePlanService.getMaintenancePlan(id);
+
+        MaintenanceAction processedMaintenanceAction = maintenanceActionService.createMaintenanceAction(maintenanceAction, maintenancePlan);
+        if(processedMaintenanceAction == null) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+        return new ResponseEntity<MaintenanceAction>(processedMaintenanceAction, HttpStatus.CREATED);
     }
 
     /**

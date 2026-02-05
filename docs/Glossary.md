@@ -16,9 +16,9 @@ A boolean flag indicating whether a maintenance plan is currently enabled and mo
 ## Trigger Types
 
 ### Time-Based Trigger
-A maintenance trigger that activates based on recurring time intervals defined using ISO 8601 duration format.
-- **Example**: `P30D` (every 30 days), `P3M` (every 3 months), `P1Y` (every year)
-- **Use Case**: Regular preventive maintenance like monthly inspections or quarterly updates
+A maintenance trigger that activates based on recurring schedules defined using cron expressions.
+- **Example**: `0 9 * * 1` (every Monday at 9:00 AM), `0 0 0 1 * *` (first day of every month at midnight), `0 0 12 * * *` (every day at noon)
+- **Use Case**: Regular preventive maintenance like weekly inspections, monthly checks, or scheduled maintenance windows
 
 ### Usage-Based Trigger
 A maintenance trigger that activates when a monitored counter reaches a specific threshold or cycle value.
