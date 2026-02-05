@@ -55,8 +55,6 @@ public class MaintenancePlanMapper {
 
     public MaintenancePlanMapper(ManagedObjectRepresentation managedObject) {
         this.managedObject = managedObject;
-        this.managedObject.setType(MANAGED_OBJECT_TYPE);
-    }
         // Ensure type is set even if the source MO didn't have it explicitly
         if (this.managedObject.getType() == null) {
             this.managedObject.setType(MANAGED_OBJECT_TYPE);
@@ -86,13 +84,11 @@ public class MaintenancePlanMapper {
     public static MaintenancePlanMapper map2(MaintenancePlan plan) {
         if (plan == null) return null;
 
-        // Initialize mapper with ID if present
+        // Initialize mapper with ID if present to ensure GId is set correctly
         MaintenancePlanMapper mapper = (plan.getId() != null)
                 ? new MaintenancePlanMapper(plan.getId())
                 : new MaintenancePlanMapper();
 
-        MaintenancePlanMapper mapper = new MaintenancePlanMapper();
-        mapper.setId(plan.getId());
         mapper.setName(plan.getName());
         mapper.setDescription(plan.getDescription());
         mapper.setNotificationText(plan.getNotificationText());
@@ -115,6 +111,7 @@ public class MaintenancePlanMapper {
         if (mor == null) return null;
         MaintenancePlanMapper mapper = new MaintenancePlanMapper(mor);
         MaintenancePlan plan = new MaintenancePlan();
+
         plan.setId(mapper.getId());
         plan.setName(mapper.getName());
         plan.setDescription(mapper.getDescription());
@@ -139,8 +136,6 @@ public class MaintenancePlanMapper {
     public void setId(String id) {
         if (id != null) managedObject.setId(GId.asGId(id));
     }
-    public void setId(Integer id) { if (id != null) managedObject.setId(GId.asGId(id)); }
-    public Integer getId() { return managedObject.getId() != null ? Integer.valueOf(managedObject.getId().getValue()) : null; }
 
     public String getId() {
         return managedObject.getId() != null ? managedObject.getId().getValue() : null;
@@ -152,7 +147,6 @@ public class MaintenancePlanMapper {
             managedObject.set(name, MP_NAME);
         }
     }
-    public void setName(String name) { if (name != null) { managedObject.setName(name); managedObject.set(name, MP_NAME); }}
     public String getName() { return managedObject.getName(); }
 
     public void setDescription(String d) { if (d != null) managedObject.set(d, MP_DESCRIPTION); }
@@ -189,7 +183,6 @@ public class MaintenancePlanMapper {
             return (List<MaintenanceTrigger>) o;
         }
         return parseList(o, MaintenanceTrigger.class);
-        return (o instanceof List) ? (List<MaintenanceTrigger>) o : parseList(o, MaintenanceTrigger.class);
     }
 
     // --- AI Field Accessors ---
@@ -203,7 +196,6 @@ public class MaintenancePlanMapper {
     public void setRequiredSkills(List<String> s) { if (s != null) managedObject.set(s, MP_REQUIRED_SKILLS); }
 
     @SuppressWarnings("unchecked")
-    public List<String> getRequiredSkills() { return (List<String>) managedObject.get(MP_REQUIRED_SKILLS); }
     public List<String> getRequiredSkills() {
         return (List<String>) managedObject.get(MP_REQUIRED_SKILLS);
     }
@@ -211,7 +203,6 @@ public class MaintenancePlanMapper {
     public void setTasks(List<?> t) { if (t != null) managedObject.set(t, MP_TASKS); }
 
     @SuppressWarnings("unchecked")
-    public List<Object> getTasks() { return (List<Object>) managedObject.get(MP_TASKS); }
     public List<Object> getTasks() {
         return (List<Object>) managedObject.get(MP_TASKS);
     }
@@ -221,14 +212,11 @@ public class MaintenancePlanMapper {
     private DateTime parseDateTime(Object obj) {
         if (obj == null) return null;
         if (obj instanceof DateTime) return (DateTime) obj;
-        if (obj instanceof String) try { return DateTime.parse((String) obj); } catch(Exception e) {}
-        return null;
-    }
         if (obj instanceof String) {
             try {
                 return DateTime.parse((String) obj);
             } catch(Exception e) {
-                // Log debug if needed, but return null to be safe
+                // Return null if parsing fails
                 return null;
             }
         }
@@ -236,8 +224,6 @@ public class MaintenancePlanMapper {
     }
 
     private <T> List<T> parseList(Object obj, Class<T> clazz) {
-        if (obj == null) return null;
-        try { return objectMapper.convertValue(obj, objectMapper.getTypeFactory().constructCollectionType(List.class, clazz)); } catch(Exception e) { return null; }
         if (obj == null) return Collections.emptyList();
         try {
             return objectMapper.convertValue(obj,

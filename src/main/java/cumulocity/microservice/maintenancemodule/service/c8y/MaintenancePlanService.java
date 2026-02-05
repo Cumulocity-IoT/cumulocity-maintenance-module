@@ -18,19 +18,20 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.joda.time.DateTime;
+import com.cumulocity.model.idtype.GId;
 import com.cumulocity.rest.representation.PageStatisticsRepresentation;
 import com.cumulocity.rest.representation.inventory.ManagedObjectRepresentation;
+import com.cumulocity.sdk.client.Param;
+import com.cumulocity.sdk.client.QueryParam;
+import com.cumulocity.sdk.client.SDKException;
 import com.cumulocity.sdk.client.inventory.InventoryApi;
 import com.cumulocity.sdk.client.inventory.InventoryFilter;
 import com.cumulocity.sdk.client.inventory.ManagedObjectCollection;
 import com.cumulocity.sdk.client.inventory.PagedManagedObjectCollectionRepresentation;
-import com.cumulocity.model.idtype.GId;
-import com.cumulocity.sdk.client.QueryParam;
-import com.cumulocity.sdk.client.SDKException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
+import cumulocity.microservice.maintenancemodule.controller.MaintenancePlanMapper;
 import cumulocity.microservice.maintenancemodule.model.DeviceAssignmentCriteria;
 import cumulocity.microservice.maintenancemodule.model.MaintenancePlan;
 import cumulocity.microservice.maintenancemodule.model.MaintenancePlanCreate;
@@ -49,6 +50,14 @@ import cumulocity.microservice.maintenancemodule.model.MaintenancePlanType;
 public class MaintenancePlanService {
 
     private static final Logger log = LoggerFactory.getLogger(MaintenancePlanService.class);
+
+    // FIX: Define the missing Param constant locally
+    private static final Param QUERY_PARAM = new Param() {
+        @Override
+        public String getName() {
+            return "query";
+        }
+    };
 
     private final ChatClient chatClient;
     private final String maintenanceSchemaJson;
@@ -69,23 +78,12 @@ public class MaintenancePlanService {
         }
         """;
 
-    private static final String SYSTEM_PROMPT = """
-        You are a generic Maintenance Planning Assistant.
-        
-        RULES:
-        1. You must ONLY generate maintenance plans.
-        2. If the user prompt is not related to maintenance, equipment, or machinery, return: {"error": "Irrelevant prompt"}.
-        3. Output MUST be valid JSON matching this schema:
-        %s
-        """.formatted(JSON_SCHEMA);
-
     @Autowired
     public MaintenancePlanService(
             InventoryApi inventoryApi,
             ChatClient.Builder chatClientBuilder,
             ObjectMapper objectMapper,
             @Value("classpath:maintenance_schema.json") Resource schemaResource) {
-            @Value("classpath:maintenance_schema.json") Resource schemaResource) throws IOException {
 
         this.inventoryApi = inventoryApi;
         this.chatClient = chatClientBuilder.build();
@@ -93,14 +91,12 @@ public class MaintenancePlanService {
 
         String schemaContent = "{}";
         if (schemaResource.exists()) {
-            this.maintenanceSchemaJson = schemaResource.getContentAsString(StandardCharsets.UTF_8);
             try {
                 schemaContent = schemaResource.getContentAsString(StandardCharsets.UTF_8);
             } catch (IOException e) {
                 log.warn("Failed to read maintenance_schema.json", e);
             }
         } else {
-            this.maintenanceSchemaJson = "{}";
             log.warn("maintenance_schema.json not found in classpath");
         }
         this.maintenanceSchemaJson = schemaContent;
@@ -108,10 +104,12 @@ public class MaintenancePlanService {
 
     public MaintenancePlanListResponse getActiveMaintenancePlansByType(MaintenancePlanType maintenancePlanType, Integer pageSize, Integer pageNumber) {
         QueryParam maintenancePlanTypeQuery;
+
+        // FIX: Use local QUERY_PARAM constant
         if (maintenancePlanType == null) {
-            maintenancePlanTypeQuery = CustomQueryParam.QUERY.setValue(MaintenancePlanMapper.MP_ACTIVE + " eq true").toQueryParam();
+            maintenancePlanTypeQuery = new QueryParam(QUERY_PARAM, MaintenancePlanMapper.MP_ACTIVE + " eq true");
         } else {
-            maintenancePlanTypeQuery = CustomQueryParam.QUERY.setValue("has(" + MaintenancePlanMapper.MP_ON_TIME + ") and " + MaintenancePlanMapper.MP_ACTIVE + " eq true").toQueryParam();
+            maintenancePlanTypeQuery = new QueryParam(QUERY_PARAM, "has(" + MaintenancePlanMapper.MP_ON_TIME + ") and " + MaintenancePlanMapper.MP_ACTIVE + " eq true");
         }
 
         PagedManagedObjectCollectionRepresentation managedObjects = inventoryApi.getManagedObjects().get(pageSize, maintenancePlanTypeQuery);
@@ -137,14 +135,10 @@ public class MaintenancePlanService {
     }
 
     /**
-     * Generates a maintenance plan proposal.
      * Generates a maintenance plan proposal using AI.
      * Uses Single-Shot Prompting: The Schema and Guarding rules are sent in one go.
      */
     public MaintenancePlanProposal proposeMaintenancePlan(String userPrompt) {
-
-        //
-
         // 1. Construct the System Prompt with Guarding, Data Rules & Schema
         String systemInstructions = """
             You are a maintenance planning assistant.
@@ -164,7 +158,7 @@ public class MaintenancePlanService {
             %s
             
             Do not include markdown formatting (like ```json ... ```). Return raw JSON only.
-            """.formatted(maintenanceSchemaJson);
+            """.formatted(JSON_SCHEMA);
 
         // 2. Call the AI
         String aiResponse = chatClient.prompt(new Prompt(
@@ -197,7 +191,8 @@ public class MaintenancePlanService {
     }
 
     public List<MaintenancePlan> getActiveTimeBasedMaintenancePlans() {
-        QueryParam maintenancePlanTypeQuery = CustomQueryParam.QUERY.setValue("has(" + MaintenancePlanMapper.MP_ON_TIME + ") and " + MaintenancePlanMapper.MP_ACTIVE + " eq true").toQueryParam();
+        // FIX: Use local QUERY_PARAM constant
+        QueryParam maintenancePlanTypeQuery = new QueryParam(QUERY_PARAM, "has(" + MaintenancePlanMapper.MP_ON_TIME + ") and " + MaintenancePlanMapper.MP_ACTIVE + " eq true");
 
         List<MaintenancePlan> maintenancePlans = new ArrayList<>();
         Iterable<ManagedObjectRepresentation> allPages = inventoryApi.getManagedObjects().get(2000, maintenancePlanTypeQuery).allPages();
@@ -211,7 +206,8 @@ public class MaintenancePlanService {
     }
 
     public List<MaintenancePlan> getAllTimeBasedMaintenancePlans() {
-        QueryParam maintenancePlanTypeQuery = CustomQueryParam.QUERY.setValue("has(" + MaintenancePlanMapper.MP_ON_TIME + ")").toQueryParam();
+        // FIX: Use local QUERY_PARAM constant
+        QueryParam maintenancePlanTypeQuery = new QueryParam(QUERY_PARAM, "has(" + MaintenancePlanMapper.MP_ON_TIME + ")");
 
         List<MaintenancePlan> maintenancePlans = new ArrayList<>();
         Iterable<ManagedObjectRepresentation> allPages = inventoryApi.getManagedObjects().get(2000, maintenancePlanTypeQuery).allPages();
@@ -267,10 +263,6 @@ public class MaintenancePlanService {
 
     // --- Standard CRUD Methods ---
 
-    public MaintenancePlanListResponse getAllMaintenancePlans(Boolean active, DateTime from, DateTime to, Integer size, Integer page, boolean total) {
-        MaintenancePlanListResponse response = new MaintenancePlanListResponse();
-        response.setPlans(new ArrayList<>());
-        return response;
     /**
      * Retrieves all maintenance plans with optional filtering and pagination.
      *
@@ -360,10 +352,6 @@ public class MaintenancePlanService {
         return active.equals(plan.getActive());
     }
 
-    public MaintenancePlan createMaintenancePlan(MaintenancePlanCreate request) {
-        MaintenancePlan plan = new MaintenancePlan();
-        plan.setName(request.getName());
-        return plan;
     private boolean filterByDateRange(MaintenancePlan plan, DateTime startDate, DateTime endDate) {
         if (startDate != null && plan.getStartDate() != null) {
             if (plan.getStartDate().isBefore(startDate)) {
@@ -378,20 +366,11 @@ public class MaintenancePlanService {
         return true;
     }
 
-    public MaintenancePlan getMaintenancePlan(Integer id) {
-        MaintenancePlan plan = new MaintenancePlan();
-        plan.setId(id);
-        return plan;
-    }
     private void validateMaintenancePlanCreate(MaintenancePlanCreate maintenancePlanCreate) {
         if (maintenancePlanCreate.getName() == null || maintenancePlanCreate.getName().trim().isEmpty()) {
             throw new IllegalArgumentException("Maintenance plan name is required");
         }
 
-    public MaintenancePlan updateMaintenancePlan(Integer id, MaintenancePlan request) {
-        request.setId(id);
-        return request;
-    }
         if (maintenancePlanCreate.getStartDate() != null && maintenancePlanCreate.getEndDate() != null) {
             if (maintenancePlanCreate.getStartDate().isAfter(maintenancePlanCreate.getEndDate())) {
                 throw new IllegalArgumentException("Start date must be before end date");
@@ -473,10 +452,7 @@ public class MaintenancePlanService {
             ManagedObjectRepresentation updatedObject = inventoryApi.update(managedObject);
 
             // Convert back to MaintenancePlan using mapper
-            MaintenancePlan updatedPlan = MaintenancePlanMapper.map2(updatedObject);
-
-            log.info("Successfully updated maintenance plan with ID: {}", id);
-            return updatedPlan;
+            return MaintenancePlanMapper.map2(updatedObject);
 
         } catch (SDKException e) {
             log.error("Failed to update maintenance plan with ID: {}", id, e);
@@ -529,7 +505,6 @@ public class MaintenancePlanService {
      * @since 1.0.0
      */
     public void deleteMaintenancePlan(String id) {
-    public void deleteMaintenancePlan(Integer id) {
         log.info("Deleting plan {}", id);
         if (id == null) {
             throw new IllegalArgumentException("Maintenance plan ID cannot be null");

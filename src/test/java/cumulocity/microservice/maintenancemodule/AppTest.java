@@ -12,9 +12,6 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 @ActiveProfiles("test")
 @Import(TestConfig.class)
 class AppTest {
-@ActiveProfiles("test")
-@Import(TestConfig.class)
-class AppTest {
 
     // REPLACED @MockBean with @MockitoBean
     @MockitoBean

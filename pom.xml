@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
@@ -11,24 +10,6 @@
     <artifactId>cumulocity-maintenance-module</artifactId>
     <version>1.0.0-SNAPSHOT</version>
 
-    <properties>
-        <java.version>17</java.version>
-        <maven.compiler.release>17</maven.compiler.release>
-        <microservice.java.version>17</microservice.java.version>
-
-        <c8y.version>2025.81.0</c8y.version>
-        <microservice.name>maintenance-module</microservice.name>
-
-        <c8y.docker.skip>true</c8y.docker.skip>
-
-        <spring-ai.version>1.0.0-M6</spring-ai.version>
-        <swagger.version>2.2.22</swagger.version>
-
-        <lombok.version>1.18.36</lombok.version>
-
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    </properties>
     <properties>
         <java.version>17</java.version>
         <maven.compiler.release>17</maven.compiler.release>
@@ -47,7 +28,6 @@
         <swagger.version>2.2.22</swagger.version>
         <lombok.version>1.18.36</lombok.version>
         <springdoc-openapi.version>2.7.0</springdoc-openapi.version>
-
         <spring-boot-dependencies.version>3.3.4</spring-boot-dependencies.version>
         <openapi-generator-maven-plugin-version>6.3.0</openapi-generator-maven-plugin-version>
     </properties>
@@ -62,49 +42,6 @@
             <id>cumulocity</id>
             <name>Cumulocity</name>
             <layout>default</layout>
-            <url>https://download.cumulocity.com/maven/repository</url>
-        </repository>
-    </repositories>
-
-    <pluginRepositories>
-        <pluginRepository>
-            <id>spring-milestones</id>
-            <url>https://repo.spring.io/milestone</url>
-        </pluginRepository>
-        <pluginRepository>
-            <id>cumulocity-plugins</id>
-            <url>https://download.cumulocity.com/maven/repository</url>
-        </pluginRepository>
-    </pluginRepositories>
-
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>com.nsn.cumulocity.clients-java</groupId>
-                <artifactId>microservice-dependencies</artifactId>
-                <version>${c8y.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-
-            <dependency>
-                <groupId>org.springframework.ai</groupId>
-                <artifactId>spring-ai-bom</artifactId>
-                <version>${spring-ai.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
-    <repositories>
-        <repository>
-            <id>spring-milestones</id>
-            <name>Spring Milestones</name>
-            <url>https://repo.spring.io/milestone</url>
-        </repository>
-        <repository>
-            <id>cumulocity</id>
-            <name>Cumulocity</name>
             <url>https://download.cumulocity.com/maven/repository</url>
         </repository>
     </repositories>
@@ -180,62 +117,7 @@
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
             <version>${springdoc-openapi.version}</version>
         </dependency>
-    <dependencies>
-        <dependency>
-            <groupId>com.nsn.cumulocity.clients-java</groupId>
-            <artifactId>microservice-autoconfigure</artifactId>
-        </dependency>
 
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-actuator</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-validation</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework.ai</groupId>
-            <artifactId>spring-ai-openai-spring-boot-starter</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-core</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-junit-jupiter</artifactId>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>io.swagger.core.v3</groupId>
-            <artifactId>swagger-annotations</artifactId>
-            <version>${swagger.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <version>1.18.36</version>
-            <scope>provided</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>com.fasterxml.jackson.datatype</groupId>
-            <artifactId>jackson-datatype-joda</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
@@ -387,57 +269,6 @@
                     <releaseProfiles>release</releaseProfiles>
                     <tagNameFormat>v@{project.version}</tagNameFormat>
                 </configuration>
-            </plugin>
-        </plugins>
-    </build>
-        <plugins>
-            <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-                <version>3.3.4</version>
-                <configuration>
-                    <mainClass>
-                        cumulocity.microservice.maintenancemodule.App
-                    </mainClass>
-                </configuration>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.13.0</version>
-                <configuration>
-                    <release>17</release>
-                    <annotationProcessorPaths>
-                        <path>
-                            <groupId>org.projectlombok</groupId>
-                            <artifactId>lombok</artifactId>
-                            <version>${lombok.version}</version>
-                        </path>
-                    </annotationProcessorPaths>
-                </configuration>
-            </plugin>
-
-            <plugin>
-                <groupId>com.nsn.cumulocity.clients-java</groupId>
-                <artifactId>microservice-package-maven-plugin</artifactId>
-                <version>${c8y.version}</version>
-                <executions>
-                    <execution>
-                        <id>package</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>package</goal>
-                        </goals>
-                        <configuration>
-                            <name>${microservice.name}</name>
-                            <image>${microservice.name}</image>
-                            <dockerBuildTimeout>1200</dockerBuildTimeout>
-                            <encoding>UTF-8</encoding>
-                            <skip>${c8y.docker.skip}</skip>
-                        </configuration>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
     </build>

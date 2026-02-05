@@ -1,17 +1,16 @@
 package cumulocity.microservice.maintenancemodule.model;
 
 import java.util.List;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
 
 import org.joda.time.DateTime;
 import org.springframework.validation.annotation.Validated;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 
 /**
  * Represents a complete maintenance plan with all fields including generated ID.
@@ -27,18 +26,11 @@ import lombok.AllArgsConstructor;
 @Validated
 public class MaintenancePlan {
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, accessMode = Schema.AccessMode.READ_ONLY, description = "Internal ID, set by Cumulocity", example = "1")
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED, accessMode = Schema.AccessMode.READ_ONLY, description = "Internal ID, set by Cumulocity", example = "1234")
     private String id;
 
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "The name of the maintenance plan", example = "Monthly Equipment Check")
     @NotNull
-    @NonNull
-    private Integer id;
-
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "The name of the maintenance plan", example = "Monthly Equipment Check")
-    @NotNull
-    @NonNull
     private String name;
 
     @Schema(description = "Detailed description of the maintenance plan")
@@ -92,19 +84,6 @@ public class MaintenancePlan {
     @Schema(description = "Usage-based maintenance trigger definition")
     @Valid
     private UsageBasedTrigger onUsage;
-
-    // --- NEW FIELDS FOR AI ---
-    @Schema(description = "Frequency of the maintenance")
-    private String frequency;
-
-    @Schema(description = "ID of the equipment")
-    private String equipmentId;
-
-    @Schema(description = "List of required skills")
-    private List<String> requiredSkills;
-
-    @Schema(description = "List of specific maintenance tasks")
-    private List<Object> tasks;
 
     @Schema(description = "Condition-based maintenance trigger definitions. Conditions are combined using logical AND.")
     @Valid
