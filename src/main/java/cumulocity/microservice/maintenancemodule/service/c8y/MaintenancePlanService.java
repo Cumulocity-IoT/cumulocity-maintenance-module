@@ -88,8 +88,8 @@ public class MaintenancePlanService {
         return maintenancePlans;
     }
 
-    public List<MaintenancePlan> getAllTimeBasedMaintenancePlans() {
-        QueryParam maintenancePlanTypeQuery = CustomQueryParam.QUERY.setValue("has("+ MaintenancePlanMapper.MP_ON_TIME + ")").toQueryParam();
+    public List<MaintenancePlan> getAllMaintenancePlansByType(String maintenancePlanType) {
+        QueryParam maintenancePlanTypeQuery = CustomQueryParam.QUERY.setValue("has("+ maintenancePlanType + ")").toQueryParam();
 
         List<MaintenancePlan> maintenancePlans = new ArrayList<>();
         Iterable<ManagedObjectRepresentation> allPages = inventoryApi.getManagedObjects().get(2000, maintenancePlanTypeQuery).allPages();

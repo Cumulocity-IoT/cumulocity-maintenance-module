@@ -54,7 +54,7 @@ public class TimeBasedMaintenanceService {
         Boolean callWithinContext = contextService.callWithinContext(context, (Callable<Boolean>) () -> {
             try {
                 log.info("Start time-based maintenance job for tenant {}", context.getTenant());
-                List<MaintenancePlan> maintenancePlans = maintenancePlanService.getAllTimeBasedMaintenancePlans();
+                List<MaintenancePlan> maintenancePlans = maintenancePlanService.getAllMaintenancePlansByType(MaintenancePlanMapper.MP_ON_TIME);
                 log.info("Found {} active time-based maintenance plans", maintenancePlans.size());
                 for (MaintenancePlan maintenancePlan : maintenancePlans) {
                     MaintenancePlan maintenancePlanUpdated = checkAndUpdateActivateFlag(maintenancePlan);
