@@ -23,11 +23,6 @@ import lombok.RequiredArgsConstructor;
 @Validated
 public class UsageBasedTrigger {
 
-    @Schema(required = true, description = "Type of trigger", example = "Usage-based")
-    @NotNull
-    @NonNull
-    private String type = "Usage-based";
-
     @Schema(required = true, description = "Usage counter configuration")
     @NotNull
     @NonNull

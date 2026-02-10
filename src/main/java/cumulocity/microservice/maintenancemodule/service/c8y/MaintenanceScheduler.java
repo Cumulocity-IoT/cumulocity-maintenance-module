@@ -1,5 +1,6 @@
 package cumulocity.microservice.maintenancemodule.service.c8y;
 
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ScheduledFuture;
@@ -66,8 +67,7 @@ public class MaintenanceScheduler {
 				return credentials;
 			}
 			
-		}, timeBasedMaintenanceRate);
-        
+		}, Duration.ofMillis(timeBasedMaintenanceRate));
         timeBasedScheduledMap.put(credentials.getTenant(), timeBasedMaintenanceScheduledTask);
 
         log.info("Creating subscription based Scheduler task for tenant: {}", credentials.getTenant());
@@ -86,8 +86,8 @@ public class MaintenanceScheduler {
 				return credentials;
 			}
 			
-		}, subscriptionBasedMaintenanceRate);
-        timeBasedScheduledMap.put(credentials.getTenant(), subscriptionBasedMaintenanceScheduledTask);
+		}, Duration.ofMillis(subscriptionBasedMaintenanceRate));
+        subscriptionBasedScheduledMap.put(credentials.getTenant(), subscriptionBasedMaintenanceScheduledTask);
 
     }
     
