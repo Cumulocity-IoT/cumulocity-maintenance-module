@@ -11,3 +11,11 @@ application-local.properties
 
 # Open API generated code
 docs/.openapi-generator/
+
+# IntelliJ IDEA
+.idea/*
+!.idea/runConfigurations/
+*.iml
+*.iws
+*.ipr
+out/
