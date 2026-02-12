@@ -372,17 +372,12 @@
         "type" : "object",
         "description" : "Usage-based maintenance trigger based on counters and thresholds",
         "properties" : {
-          "type" : {
-            "type" : "string",
-            "description" : "Type of trigger",
-            "example" : "Usage-based"
-          },
           "counter" : {
             "$ref" : "#/components/schemas/UsageCounter",
             "description" : "Usage counter configuration"
           }
         },
-        "required" : [ "counter", "type" ]
+        "required" : [ "counter" ]
       },
       "UsageCounter" : {
         "type" : "object",

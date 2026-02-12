@@ -39,8 +39,9 @@ if [ $rc -ne 0 ] || [ -z "$cmd_output" ]; then
   exit 1
 fi
 
-# Validate JSON and inject base URL
-json="$(printf '%s' "$cmd_output" | jq --arg base "$C8Y_BASEURL" '. + {C8Y_BASEURL: $base}')" || {
+# Validate JSON and inject base URL and websocket URL
+websocket_url="wss://$C8Y_DOMAIN"
+json="$(printf '%s' "$cmd_output" | jq --arg base "$C8Y_BASEURL" --arg ws "$websocket_url" '. + {C8Y_BASEURL: $base, C8Y_NOTIFICATIONS2_WEBSOCKETURL: $ws}')" || {
   echo "ERROR: Unexpected JSON format from c8y output." >&2
   exit 1
 }

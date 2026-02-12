@@ -1,15 +1,20 @@
 package cumulocity.microservice.maintenancemodule.service.c8y;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.joda.time.DateTime;
 
 import com.cumulocity.model.idtype.GId;
 import com.cumulocity.rest.representation.inventory.ManagedObjectRepresentation;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.joda.JodaModule;
 
 import cumulocity.microservice.maintenancemodule.model.ConditionBasedTrigger;
 import cumulocity.microservice.maintenancemodule.model.DeviceAssignmentCriteria;
+import cumulocity.microservice.maintenancemodule.model.DeviceSubscriptionInfo;
 import cumulocity.microservice.maintenancemodule.model.MaintenancePlan;
 import cumulocity.microservice.maintenancemodule.model.MaintenancePlanCreate;
 import cumulocity.microservice.maintenancemodule.model.TimeBasedTrigger;
@@ -48,6 +53,8 @@ public class MaintenancePlanMapper {
     public static final String MP_ON_USAGE = "mp_OnUsage";
     public static final String MP_ON_CONDITIONS = "mp_OnConditions";
     public static final String MP_APPLY = "mp_Apply";
+    public static final String MP_DEVICE_SUBSCRIPTIONS = "mp_DeviceSubscriptions";
+    public static final String MP_SUBSCRIPTION_NAME_PREFIX = "mp";
     
     private final ManagedObjectRepresentation managedObject;
     
@@ -408,5 +415,72 @@ public class MaintenancePlanMapper {
         } catch (Exception e) {
             return new java.util.ArrayList<>();
         }
+    }
+
+    /**
+     * Retrieves the device subscriptions map from the managed object.
+     * Maps device IDs to their subscription information for usage-based maintenance.
+     * 
+     * @return map of device ID to DeviceSubscriptionInfo, empty map if not set
+     * @since 1.0.0
+     */
+    @SuppressWarnings("unchecked")
+    public Map<String, DeviceSubscriptionInfo> getDeviceSubscriptions() {
+        Object subscriptions = managedObject.get(MP_DEVICE_SUBSCRIPTIONS);
+        if (subscriptions == null) {
+            return new HashMap<>();
+        }
+        if (subscriptions instanceof Map) {
+            try {
+                ObjectMapper mapper = new ObjectMapper();
+                mapper.registerModule(new JodaModule());
+                return mapper.convertValue(subscriptions, 
+                    new TypeReference<Map<String, DeviceSubscriptionInfo>>() {});
+            } catch (Exception e) {
+                return new HashMap<>();
+            }
+        }
+        return new HashMap<>();
+    }
+
+    /**
+     * Sets the device subscriptions map in the managed object.
+     * 
+     * @param deviceSubscriptions map of device ID to DeviceSubscriptionInfo
+     * @since 1.0.0
+     */
+    public void setDeviceSubscriptions(Map<String, DeviceSubscriptionInfo> deviceSubscriptions) {
+        if (deviceSubscriptions == null) {
+            return;
+        }
+        managedObject.set(deviceSubscriptions, MP_DEVICE_SUBSCRIPTIONS);
+    }
+
+    /**
+     * Generates a subscription name for a maintenance plan.
+     * Format: mp_{planId}_usage
+     * 
+     * @param planId the maintenance plan ID
+     * @return the generated subscription name
+     * @since 1.0.0
+     */
+    public static String generateSubscriptionName(String planId) {
+        return MP_SUBSCRIPTION_NAME_PREFIX + planId;
+    }
+
+    /**
+     * Extracts the maintenance plan ID from a subscription name.
+     * 
+     * @param subscriptionName the subscription name in format mp_{planId}_usage
+     * @return the extracted plan ID, or null if format is invalid
+     * @since 1.0.0
+     */
+    public static String extractPlanIdFromSubscriptionName(String subscriptionName) {
+        if (subscriptionName == null || !subscriptionName.startsWith(MP_SUBSCRIPTION_NAME_PREFIX)) {
+            return null;
+        }
+        return subscriptionName.substring(
+            MP_SUBSCRIPTION_NAME_PREFIX.length(), 
+            subscriptionName.length());
     }
 }

@@ -12,7 +12,7 @@ if ($env:C8Y_BASEURL) {
 }
 
 $cmdOutput = c8y microservices create --name maintenance-module --file ./src/main/configuration/cumulocity.json `
-    | c8y microservices getBootstrapUser --outputTemplate "{C8Y_BASEURL: 'NA', C8Y_BOOTSTRAP_TENANT: output.tenant, C8Y_BOOTSTRAP_USER: output.name, C8Y_BOOTSTRAP_PASSWORD: output.password, C8Y_MICROSERVICE_ISOLATION: 'MULTI_TENANT'}"
+    | c8y microservices getBootstrapUser --outputTemplate "{C8Y_BASEURL: 'NA', C8Y_NOTIFICATIONS2_WEBSOCKETURL: 'NA', C8Y_BOOTSTRAP_TENANT: output.tenant, C8Y_BOOTSTRAP_USER: output.name, C8Y_BOOTSTRAP_PASSWORD: output.password, C8Y_MICROSERVICE_ISOLATION: 'MULTI_TENANT'}"
 
 if (-not $cmdOutput) { throw "No output received from c8y command." }
 
@@ -22,6 +22,10 @@ if (-not $json) { throw "Unexpected JSON format (missing env object)." }
 $baseUrl = $env:C8Y_BASEURL
 if (-not $baseUrl) { throw "Environment variable C8Y_BASEURL not set." }
 $json.C8Y_BASEURL = $baseUrl
+
+$websocketUrl = "wss://"+$env:C8Y_DOMAIN
+if (-not $websocketUrl) { throw "Environment variable C8Y_DOMAIN not set." }
+$json.C8Y_NOTIFICATIONS2_WEBSOCKETURL = $websocketUrl
 
 # --- Write KEY=VALUE file (.env/dev.env) ---
 $envDir = Join-Path $PSScriptRoot ".env"
