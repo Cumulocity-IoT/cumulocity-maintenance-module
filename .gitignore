@@ -19,3 +19,4 @@ docs/.openapi-generator/
 *.iws
 *.ipr
 out/
+.DS_Store

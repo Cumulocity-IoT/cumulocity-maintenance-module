@@ -2,7 +2,7 @@ package cumulocity.microservice.maintenancemodule.service.c8y;
 
 import org.joda.time.DateTime;
 import org.springframework.stereotype.Service;
-
+import cumulocity.microservice.maintenancemodule.model.MaintenancePlan;
 import com.cumulocity.model.event.CumulocityAlarmStatuses;
 import com.cumulocity.model.idtype.GId;
 import com.cumulocity.rest.representation.event.EventRepresentation;
@@ -38,7 +38,7 @@ public class MaintenanceActionService {
         this.alarmApi = alarmApi;
     }
 
-    public MaintenanceAction createMaintenanceAction(MaintenanceAction maintenanceAction) {
+    public MaintenanceAction createMaintenanceAction(MaintenanceAction maintenanceAction, MaintenancePlan maintenancePlan) {
         log.info("Creating maintenance action: {}", maintenanceAction);
 
         if (maintenanceAction.getStatus() == null) {
@@ -49,59 +49,61 @@ public class MaintenanceActionService {
         switch (maintenanceAction.getStatus()) {
             case SCHEDULED:
                 log.info("Maintenance action scheduled for device: {}", maintenanceAction.getDeviceId());
-                return createScheduledAction(maintenanceAction);
+                return createScheduledAction(maintenancePlan, maintenanceAction);
             case IN_PROGRESS:
                 log.info("Maintenance action in progress for device: {}", maintenanceAction.getDeviceId());
-                return createInProgressAction(maintenanceAction);
+                return createInProgressAction(maintenancePlan, maintenanceAction);
             case COMPLETED:
                 log.info("Maintenance action completed for device: {}", maintenanceAction.getDeviceId());
-                return createCompletedAction(maintenanceAction);
+                return createCompletedAction(maintenancePlan, maintenanceAction);
             case CANCELLED:
                 log.info("Maintenance action cancelled for device: {}", maintenanceAction.getDeviceId());
-                return createCancelledAction(maintenanceAction);
+                return createCancelledAction(maintenancePlan, maintenanceAction);
             default:
                 log.warn("Unknown maintenance action status: {}", maintenanceAction.getStatus());
                 return null;
         }
     }
 
-    private MaintenanceAction createScheduledAction(MaintenanceAction maintenanceAction) {
-        createEvent(maintenanceAction);
-        updateMaintenanceAlarm(maintenanceAction.getDeviceId(), CumulocityAlarmStatuses.ACTIVE, CumulocityAlarmStatuses.ACKNOWLEDGED);
+    private MaintenanceAction createScheduledAction(MaintenancePlan maintenancePlan, MaintenanceAction maintenanceAction) {
+        createEvent(maintenanceAction, maintenancePlan);
+        updateMaintenanceAlarm(maintenanceAction.getDeviceId(), maintenancePlan, CumulocityAlarmStatuses.ACTIVE, CumulocityAlarmStatuses.ACKNOWLEDGED);
         return maintenanceAction;
     }
 
-    private MaintenanceAction createInProgressAction(MaintenanceAction maintenanceAction) {
-        createEvent(maintenanceAction);
-        updateMaintenanceMode(maintenanceAction.getDeviceId(), maintenanceAction.getStatus());
-        updateMaintenanceAlarm(maintenanceAction.getDeviceId(), CumulocityAlarmStatuses.ACKNOWLEDGED, CumulocityAlarmStatuses.ACKNOWLEDGED);
+    private MaintenanceAction createInProgressAction(MaintenancePlan maintenancePlan, MaintenanceAction maintenanceAction) {
+        createEvent(maintenanceAction, maintenancePlan);
+        updateMaintenanceMode(maintenanceAction.getDeviceId(), maintenanceAction.getStatus(), maintenancePlan);
+        updateMaintenanceAlarm(maintenanceAction.getDeviceId(), maintenancePlan, CumulocityAlarmStatuses.ACKNOWLEDGED, CumulocityAlarmStatuses.ACKNOWLEDGED);
         return maintenanceAction;
     }
 
-    private MaintenanceAction createCompletedAction(MaintenanceAction maintenanceAction) {
-        createEvent(maintenanceAction);
-        updateMaintenanceMode(maintenanceAction.getDeviceId(), maintenanceAction.getStatus());
-        updateMaintenanceAlarm(maintenanceAction.getDeviceId(), CumulocityAlarmStatuses.ACKNOWLEDGED, CumulocityAlarmStatuses.CLEARED);
+    private MaintenanceAction createCompletedAction(MaintenancePlan maintenancePlan, MaintenanceAction maintenanceAction) {
+        createEvent(maintenanceAction, maintenancePlan);
+        updateMaintenanceMode(maintenanceAction.getDeviceId(), maintenanceAction.getStatus(), maintenancePlan);
+        updateMaintenanceAlarm(maintenanceAction.getDeviceId(), maintenancePlan, CumulocityAlarmStatuses.ACKNOWLEDGED, CumulocityAlarmStatuses.CLEARED);
         return maintenanceAction;
     }
 
-    private MaintenanceAction createCancelledAction(MaintenanceAction maintenanceAction) {
-        createEvent(maintenanceAction);
-        updateMaintenanceMode(maintenanceAction.getDeviceId(), maintenanceAction.getStatus());
-        updateMaintenanceAlarm(maintenanceAction.getDeviceId(), CumulocityAlarmStatuses.ACKNOWLEDGED, CumulocityAlarmStatuses.ACTIVE);
+    private MaintenanceAction createCancelledAction(MaintenancePlan maintenancePlan, MaintenanceAction maintenanceAction) {
+        createEvent(maintenanceAction, maintenancePlan);
+        updateMaintenanceMode(maintenanceAction.getDeviceId(), maintenanceAction.getStatus(), maintenancePlan);
+        updateMaintenanceAlarm(maintenanceAction.getDeviceId(), maintenancePlan, CumulocityAlarmStatuses.ACKNOWLEDGED, CumulocityAlarmStatuses.ACTIVE);
         return maintenanceAction;
     }
 
-    private void createEvent(MaintenanceAction maintenanceAction) {
+    private void createEvent(MaintenanceAction maintenanceAction, MaintenancePlan maintenancePlan) {
         ManagedObjectRepresentation device = new ManagedObjectRepresentation();
         device.setId(new GId(maintenanceAction.getDeviceId()));
 
         EventRepresentation event = new EventRepresentation();
         event.setDateTime(new DateTime());
-        event.setText(maintenanceAction.getNotification() != null ? maintenanceAction.getNotification() : "Maintenance action: " + maintenanceAction.getStatus());
-        event.setType(EVENT_TYPE_MAINTENANCE);
+        event.setText("Maintenance Plan: " + maintenancePlan.getName() + ", Action: " + maintenanceAction.getStatus());
+        event.setType(MaintenancePlanMapper.EVENT_TYPE_MAINTENANCE+maintenancePlan.getId());
         event.setSource(device);
         event.set(maintenanceAction.getStatus().name(), FRAGMENT_STATUS_MAINTENANCE);
+
+        event.set(maintenanceAction.getStatus().name(), MaintenancePlanMapper.FRAGMENT_STATUS_MAINTENANCE);
 
         try {
             eventApi.create(event);
@@ -110,7 +112,7 @@ public class MaintenanceActionService {
         }
     }
 
-    private void updateMaintenanceMode(String deviceId, MaintenanceStatus status) {
+    private void updateMaintenanceMode(String deviceId, MaintenanceStatus status, MaintenancePlan maintenancePlan) {
         try {
             ManagedObjectRepresentation currentDevice = inventoryApi.get(GId.asGId(deviceId));
             RequiredAvailability currentRequiredAvailability = currentDevice.get(RequiredAvailability.class);
@@ -119,8 +121,8 @@ public class MaintenanceActionService {
             deviceUpdate.setId(new GId(deviceId));
             boolean needUpdate = false;
 
-            // Logic corrected: Only update availability if the fragment exists
-            if (currentRequiredAvailability != null) {
+            if(currentRequiredAvailability != null) {
+                log.warn("Device does not have RequiredAvailability fragment, cannot update maintenance mode for device: {}", deviceId);
                 int currentResponseInterval = currentRequiredAvailability.getResponseInterval();
                 RequiredAvailability availability = new RequiredAvailability();
 
@@ -128,7 +130,6 @@ public class MaintenanceActionService {
                     // Set negative interval to indicate maintenance mode (standard C8Y pattern)
                     availability.setResponseInterval(-Math.abs(currentResponseInterval));
                 } else {
-                    // Restore positive interval
                     availability.setResponseInterval(Math.abs(currentResponseInterval));
                 }
                 deviceUpdate.set(availability);
@@ -151,12 +152,13 @@ public class MaintenanceActionService {
         }
     }
 
-    private void updateMaintenanceAlarm(String deviceId, CumulocityAlarmStatuses fromStatus, CumulocityAlarmStatuses toStatus) {
+    private void updateMaintenanceAlarm(String deviceId, MaintenancePlan maintenancePlan, CumulocityAlarmStatuses fromStatus, CumulocityAlarmStatuses toStatus) {
         try {
             AlarmFilter alarmFilter = new AlarmFilter();
             alarmFilter.bySource(GId.asGId(deviceId))
                     .byStatus(fromStatus)
                     .byType(ALARM_TYPE);
+            alarmFilter.bySource(GId.asGId(deviceId)).byStatus(fromStatus).byType(MaintenancePlanMapper.ALARM_TYPE+maintenancePlan.getId());
 
             // Corrected: Added .getAlarms() to iterate correctly over the paged result
             alarmApi.getAlarmsByFilter(alarmFilter)
@@ -170,4 +172,5 @@ public class MaintenanceActionService {
             log.error("Error updating maintenance alarm for device: {}", deviceId, e);
         }
     }
+
 }

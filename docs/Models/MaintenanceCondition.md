@@ -3,7 +3,7 @@
 
 | Name | Type | Description | Notes |
 |------------ | ------------- | ------------- | -------------|
-| **subscription** | [**Subscription**](Subscription.md) |  | [default to null] |
+| **subscription** | [**Subscription**](Subscription.md) | Subscription details | [default to null] |
 | **valueFragment** | **String** | Value fragment to evaluate | [default to null] |
 | **operator** | **String** | Comparison operator | [default to null] |
 | **value** | [**Object**](.md) | Value to compare against | [default to null] |

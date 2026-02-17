@@ -8,7 +8,7 @@
   "endDate": "2023-10-02T00:00:00Z",
   "active": true,
   "onTime": {
-      "interval": "P30D"
+      "cronExpression": "0 0 0 */30 * *"
   },
   "apply": {
     "idsInternal": ["124", "2323"]

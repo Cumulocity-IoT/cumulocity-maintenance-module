@@ -1,24 +1,24 @@
 # ADR-001: Time-Based Trigger Implementation for Maintenance Plans
 
 ## Status
-Proposed
+Implemented (Updated to use cron expressions)
 
 ## Context
-The Cumulocity Maintenance Module requires a mechanism to trigger maintenance tasks based on time intervals. The `TimeBasedTrigger` model has been defined using ISO 8601 duration intervals (e.g., "PT1H" for hourly, "P1D" for daily maintenance). We need to design and implement a service architecture that:
+The Cumulocity Maintenance Module requires a mechanism to trigger maintenance tasks based on scheduled time patterns. The `TimeBasedTrigger` model has been updated to use cron expressions instead of ISO 8601 duration intervals to provide more flexibility for scheduling maintenance at specific times and days.
 
 - Monitors all devices with time-based maintenance plans
-- Calculates the next execution timestamp for each device
-- Triggers maintenance tasks at the appropriate time
+- Calculates the next execution timestamp for each device using cron expressions
+- Triggers maintenance tasks at the appropriate scheduled time
 - Scales to handle potentially thousands of devices
 - Integrates seamlessly with the Cumulocity IoT platform
 - Handles edge cases such as service restarts, missed executions, and timezone considerations
 
-The ISO 8601 duration format supports various intervals including:
-- Hours: `PT1H`, `PT2H`, `PT6H`
-- Days: `P1D`, `P7D`
-- Weeks: `P1W`
-- Months: `P1M`
-- Combined: `P1DT12H` (1 day and 12 hours)
+Cron expressions support flexible scheduling patterns including:
+- Specific times: `0 9 * * 1` (every Monday at 9:00 AM)
+- Daily patterns: `0 0 12 * * *` (every day at noon)
+- Monthly patterns: `0 0 0 1 * *` (first day of every month at midnight)
+- Weekly patterns: `0 0 0 * * 5` (every Friday at midnight)
+- Complex patterns: `0 0 9-17 * * 1-5` (every weekday from 9 AM to 5 PM)
 
 ## Decision Drivers
 - **Scalability**: Must handle hundreds to thousands of devices efficiently
@@ -47,7 +47,7 @@ Schedule job:
 - Query Cumulocity for all devices with time-based maintenance plans using `apply` filters
 - For each device, calculate next execution time based on:
   - Last successful maintenance timestamp (stored in Cumulocity)
-  - ISO 8601 interval from maintenance plan
+  - Cron expression from maintenance plan
 - Store next maintenance timestamp back to Cumulocity if this has changed
 - If current time >= next maintenance time and device not in maintenance: create maintenance alarm
 
@@ -234,8 +234,8 @@ Currently recommending **Option 1: Periodic Job with Timestamp Calculation** wit
 1. **Storage Strategy**: Use Managed Object Fragments
    - Store `c8y_maintenanceSchedule` fragment containing:
      - `lastExecutionTime`: ISO 8601 timestamp
-     - `nextExecutionTime`: ISO 8601 timestamp (calculated)
-     - `interval`: ISO 8601 duration
+     - `nextExecutionTime`: ISO 8601 timestamp (calculated from cron)
+     - `cronExpression`: Cron expression for scheduling
      - `status`: "ACTIVE", "PAUSED", "ERROR"
 
 2. **Optimization**: Implement query optimization
@@ -301,8 +301,9 @@ Currently recommending **Option 1: Periodic Job with Timestamp Calculation** wit
 - Add metrics for monitoring (execution time, device count, failures)
 - Consider using `@Async` for parallel device processing
 - Implement circuit breaker pattern for Cumulocity API calls
-- Use ISO 8601 duration parsing library (java.time.Duration)
+- Use Spring CronExpression class for parsing and calculating next execution times
 - Add configuration properties for job interval (externalize the 1-minute value)
+- Validate cron expressions at maintenance plan creation time
 
 
 
@@ -312,7 +313,8 @@ Currently recommending **Option 1: Periodic Job with Timestamp Calculation** wit
 - [Link to ADR about monitoring and observability]
 
 ## References
-- ISO 8601 Duration Format: https://en.wikipedia.org/wiki/ISO_8601#Durations
+- Cron Expression Format: https://en.wikipedia.org/wiki/Cron
+- Spring CronExpression: https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/scheduling/support/CronExpression.html
 - Spring Scheduling: https://docs.spring.io/spring-framework/docs/current/reference/html/integration.html#scheduling
 - Cumulocity REST API: https://cumulocity.com/guides/reference/rest-implementation/
 - TimeBasedTrigger Model: `src/main/java/cumulocity/microservice/maintenancemodule/model/TimeBasedTrigger.java`
@@ -321,10 +323,11 @@ Currently recommending **Option 1: Periodic Job with Timestamp Calculation** wit
 | Date | Reviewer | Decision | Notes |
 |------|----------|----------|-------|
 | 2026-01-19 | - | Proposed | Initial draft |
+| 2026-01-29 | - | Updated | Changed from ISO 8601 intervals to cron expressions for more flexible scheduling |
 
 ---
 
 **Author**: APES  
 **Date**: 2026-01-19  
-**Version**: 1.0  
-**Last Updated**: 2026-01-19
+**Version**: 1.1  
+**Last Updated**: 2026-01-29

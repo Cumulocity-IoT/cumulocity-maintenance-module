@@ -31,7 +31,6 @@ import com.cumulocity.sdk.client.inventory.PagedManagedObjectCollectionRepresent
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import cumulocity.microservice.maintenancemodule.controller.MaintenancePlanMapper;
 import cumulocity.microservice.maintenancemodule.model.DeviceAssignmentCriteria;
 import cumulocity.microservice.maintenancemodule.model.MaintenancePlan;
 import cumulocity.microservice.maintenancemodule.model.MaintenancePlanCreate;

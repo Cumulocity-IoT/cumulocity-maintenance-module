@@ -3,7 +3,7 @@
 
 | Name | Type | Description | Notes |
 |------------ | ------------- | ------------- | -------------|
-| **subscription** | [**Subscription**](Subscription.md) |  | [default to null] |
+| **subscription** | [**Subscription**](Subscription.md) | Subscription details | [default to null] |
 | **valueFragment** | **String** | Value fragment to monitor | [default to null] |
 | **cycleValue** | **Integer** | Cycle value for counter reset | [optional] [default to null] |
 | **thresholdValue** | **Integer** | Threshold value to trigger maintenance | [optional] [default to null] |
