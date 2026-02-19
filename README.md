@@ -1,23 +1,32 @@
 # cumulocity-maintenance-module
+
 This module extends Cumulocity with maintenance plans for devices and assets. It gets configured by a declarative JSON file and provides a REST API to manage maintenance plans. In comparison to Analytics Builder which offers an imperative approach, this module focuses on declarative definitions and focus only on this maintenance aspect. Each maintenance plan can be associated with one or more devices and assets, and it can be scheduled based on time, usage, or condition.
 
-It also provides an API to notify about maintenance actions.
+It also provides an API to notify about maintenance actions and a dedicated endpoint to automatically generate maintenance plans using natural language user prompts.
 
+## AI-Assisted Maintenance Plan Generation
+
+Instead of writing the JSON configuration manually, you can generate a complete maintenance plan (including complex time-based triggers and cron expressions) by simply sending a natural language prompt to the REST API.
+
+**Endpoint:** `POST /maintenance-plan/prompt`
+
+Example Request:
+```json
+{
+  "prompt": "Create a weekly maintenance plan for the main HVAC unit starting every Monday at 8 AM."
+}
+```
 ## Supported Maintenance Types
-
 ### Time-based Maintenance (TBM)
 
 • Maintenance performed at regular time intervals (e.g., every 30 days).
 
-• Often used for components with predictable wear patterns.
-
-Example:
-
+• Often used for components with predictable wear patterns. Supports complex scheduling using Cron expressions via the TimeBasedTrigger model.
+Example Request:
 ```json
-
 {
   "name": "30 Day maintenance",
-  "description": "This is a 30 day maintenance task.",
+  "description": "This is a 30-day maintenance task.",
   "notificationText": "Maintenance Task: Check something and restart device!",
   "notificationType": "alarm",
   "startDate": "2025-10-01T00:00:00Z",
@@ -30,9 +39,7 @@ Example:
     "idsInternal": ["383901"]
   }
 }
-
 ```
-
 
 ### Usage-based Maintenance (UBM)
 
@@ -43,7 +50,6 @@ Example:
 Example:
 
 ```json
-
 {
   "name": "Operating Hours Based Maintenance",
   "description": "Triggers maintenance when operating hours for a device exceed 10000 hours, based on the 'operatingHours' measurement type.",
@@ -55,14 +61,14 @@ Example:
     {
       "type": "Usage-based",
       "counter": {
-          "subscription": {
-            "api": "measurements",
-            "typeFilter": "operatingHours"
-          },
-          "valueFragment": "operatingHours.t",
-          "operator": "gt",
-          "value": 10000.0
-        }
+        "subscription": {
+          "api": "measurements",
+          "typeFilter": "operatingHours"
+        },
+        "valueFragment": "operatingHours.t",
+        "operator": "gt",
+        "value": 10000.0
+      }
     }
   ]
 }
@@ -77,7 +83,6 @@ Example:
 Example:
 
 ```json
-
 {
   "name": "Condition-based Maintenance",
   "description": "Triggers maintenance when the temperature exceeds 75 degrees Celsius based on the 'temperature' measurement type.",
@@ -89,21 +94,20 @@ Example:
     {
       "type": "Condition-based",
       "condition": {
-          "subscription": {
-            "api": "measurements",
-            "typeFilter": "temperature"
-          },
-          "valueFragment": "temperature.t",
-          "operator": "gt",
-          "value": 75.0
-        }
+        "subscription": {
+          "api": "measurements",
+          "typeFilter": "temperature"
+        },
+        "valueFragment": "temperature.t",
+        "operator": "gt",
+        "value": 75.0
+      }
     }
   ]
 }
 ```
 
-
-### Nofigation for Maintenance Actions
+### Notification for Maintenance Actions
 
 ```json
 {
