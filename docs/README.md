@@ -26,7 +26,6 @@ All URIs are relative to *http://localhost:8080*
  - [MaintenancePlan](./Models/MaintenancePlan.md)
  - [MaintenancePlanCreate](./Models/MaintenancePlanCreate.md)
  - [MaintenancePlanListResponse](./Models/MaintenancePlanListResponse.md)
- - [MaintenanceTrigger](./Models/MaintenanceTrigger.md)
  - [Subscription](./Models/Subscription.md)
  - [TimeBasedTrigger](./Models/TimeBasedTrigger.md)
  - [UsageBasedTrigger](./Models/UsageBasedTrigger.md)

@@ -11,7 +11,6 @@ import org.springframework.validation.annotation.Validated;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
@@ -27,7 +26,6 @@ import lombok.RequiredArgsConstructor;
 @Data
 @RequiredArgsConstructor
 @NoArgsConstructor
-@AllArgsConstructor
 @Schema(description = "Represents a complete maintenance plan with all fields including generated ID")
 @Validated
 public class MaintenancePlan {
@@ -46,7 +44,7 @@ public class MaintenancePlan {
         WARNING
     }
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, accessMode = Schema.AccessMode.READ_ONLY, description = "Internal ID, set by Cumulocity", example = "1234")
+    @Schema(required = true, accessMode = Schema.AccessMode.READ_ONLY, description = "Internal ID, set by Cumulocity", example = "1234")
     @NotNull
     @NonNull
     private String id;
@@ -75,40 +73,18 @@ public class MaintenancePlan {
     @Schema(description = "Maintenance severity which can be used to initialize the maintenance notification severity", example = "CRITICAL")
     private MaintenanceNotificationSeverity notificationSeverity;
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Start date", example = "2025-01-01T09:00:00Z")
-    @NotNull
+    @Schema(required = true, description = "Start date and time for the maintenance", example = "2025-01-01T09:00:00Z")
     private DateTime startDate;
 
     @Schema(description = "End date and time for the maintenance", example = "2025-12-31T17:00:00Z")
-    @NotNull
     private DateTime endDate;
 
     @Schema(description = "Indicates whether the maintenance plan is active", example = "true")
     private Boolean active;
 
-    @Schema(description = "List of triggers (combined view)")
-    @Valid
-    private List<MaintenanceTrigger> on;
-
     @Schema(description = "Device assignment filter criteria")
     @Valid
     private DeviceAssignmentCriteria apply;
-
-    // --- AI Fields ---
-
-    @Schema(description = "Frequency of the maintenance")
-    private String frequency;
-
-    @Schema(description = "ID of the equipment")
-    private String equipmentId;
-
-    @Schema(description = "List of required skills")
-    private List<String> requiredSkills;
-
-    @Schema(description = "List of specific maintenance tasks")
-    private List<Object> tasks;
-
-    // --- Specific Trigger Fields (Optional/View specific) ---
 
     @Schema(description = "Time-based maintenance trigger definition")
     @Valid

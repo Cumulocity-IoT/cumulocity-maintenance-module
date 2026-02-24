@@ -151,7 +151,7 @@ GET maintenance plan by Id
 
 <a name="proposeMaintenancePlan"></a>
 # **proposeMaintenancePlan**
-> Object proposeMaintenancePlan(request\_body)
+> MaintenancePlan proposeMaintenancePlan(request\_body)
 
 
 
@@ -163,7 +163,7 @@ GET maintenance plan by Id
 
 ### Return type
 
-**Object**
+[**MaintenancePlan**](../Models/MaintenancePlan.md)
 
 ### Authorization
 
