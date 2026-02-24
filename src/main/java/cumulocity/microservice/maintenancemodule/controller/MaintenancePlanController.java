@@ -16,7 +16,6 @@ import cumulocity.microservice.maintenancemodule.model.MaintenanceAction;
 import cumulocity.microservice.maintenancemodule.model.MaintenancePlan;
 import cumulocity.microservice.maintenancemodule.model.MaintenancePlanCreate;
 import cumulocity.microservice.maintenancemodule.model.MaintenancePlanListResponse;
-import cumulocity.microservice.maintenancemodule.model.MaintenancePlanType;
 import cumulocity.microservice.maintenancemodule.service.c8y.MaintenanceActionService;
 import cumulocity.microservice.maintenancemodule.service.c8y.MaintenancePlanService;
 import cumulocity.microservice.maintenancemodule.model.MaintenancePlanProposal;
@@ -55,7 +54,7 @@ public class MaintenancePlanController {
      */
     @PostMapping(path = "/ai", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> proposeMaintenancePlan(@RequestBody Map<String, String> body) {
-        String prompt = body.get("userprompt");
+        String prompt = body.get("user prompt");
         if (prompt == null || prompt.isBlank()) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
