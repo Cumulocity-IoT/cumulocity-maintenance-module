@@ -26,6 +26,8 @@
 
         <spring-ai.version>1.0.0-M6</spring-ai.version>
         <swagger.version>2.2.22</swagger.version>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
         <lombok.version>1.18.36</lombok.version>
         <springdoc-openapi.version>2.7.0</springdoc-openapi.version>
         <spring-boot-dependencies.version>3.3.7</spring-boot-dependencies.version>
@@ -123,17 +125,6 @@
         </dependency>
 
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.junit.vintage</groupId>
-                    <artifactId>junit-vintage-engine</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
             <scope>test</scope>
@@ -215,6 +206,15 @@
 					</compilerArgs>
 				</configuration>
 			</plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>3.3.1</version>
+                <configuration>
+                    <propertiesEncoding>UTF-8</propertiesEncoding>
+                </configuration>
+            </plugin>
 
 			<plugin>
 				<groupId>com.nsn.cumulocity.clients-java</groupId>
