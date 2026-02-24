@@ -9,8 +9,11 @@ All URIs are relative to *http://localhost:8080*
 |------------ | ------------- | ------------- | -------------|
 | *MaintenancePlanControllerApi* | [**createMaintenanceAction**](Apis/MaintenancePlanControllerApi.md#createMaintenanceAction) | **POST** /api/maintenance/plans/{id}/actions | Create a new maintenance action for maintenance plan |
 *MaintenancePlanControllerApi* | [**createMaintenancePlan**](Apis/MaintenancePlanControllerApi.md#createMaintenancePlan) | **POST** /api/maintenance/plans | Create a new maintenance plan |
-*MaintenancePlanControllerApi* | [**getActiveMaintenancePlansByType**](Apis/MaintenancePlanControllerApi.md#getActiveMaintenancePlansByType) | **GET** /api/maintenance/plans | Get all active maintenance plans with optional filtering and pagination |
+*MaintenancePlanControllerApi* | [**deleteMaintenancePlan**](Apis/MaintenancePlanControllerApi.md#deleteMaintenancePlan) | **DELETE** /api/maintenance/plans/{id} |  |
+*MaintenancePlanControllerApi* | [**getAllMaintenancePlans**](Apis/MaintenancePlanControllerApi.md#getAllMaintenancePlans) | **GET** /api/maintenance/plans |  |
 *MaintenancePlanControllerApi* | [**getMaintenancePlan**](Apis/MaintenancePlanControllerApi.md#getMaintenancePlan) | **GET** /api/maintenance/plans/{id} | GET maintenance plan by Id |
+*MaintenancePlanControllerApi* | [**proposeMaintenancePlan**](Apis/MaintenancePlanControllerApi.md#proposeMaintenancePlan) | **POST** /api/maintenance/plans/ai |  |
+*MaintenancePlanControllerApi* | [**updateMaintenancePlan**](Apis/MaintenancePlanControllerApi.md#updateMaintenancePlan) | **PUT** /api/maintenance/plans/{id} |  |
 
 
 <a name="documentation-for-models"></a>
@@ -23,6 +26,7 @@ All URIs are relative to *http://localhost:8080*
  - [MaintenancePlan](./Models/MaintenancePlan.md)
  - [MaintenancePlanCreate](./Models/MaintenancePlanCreate.md)
  - [MaintenancePlanListResponse](./Models/MaintenancePlanListResponse.md)
+ - [MaintenanceTrigger](./Models/MaintenanceTrigger.md)
  - [Subscription](./Models/Subscription.md)
  - [TimeBasedTrigger](./Models/TimeBasedTrigger.md)
  - [UsageBasedTrigger](./Models/UsageBasedTrigger.md)

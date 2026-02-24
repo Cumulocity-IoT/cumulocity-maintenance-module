@@ -12,7 +12,12 @@
 | **startDate** | **Date** | Start date and time for the maintenance | [default to null] |
 | **endDate** | **Date** | End date and time for the maintenance | [default to null] |
 | **active** | **Boolean** | Indicates whether the maintenance plan is active | [optional] [default to null] |
+| **on** | [**List**](MaintenanceTrigger.md) | List of triggers (combined view) | [optional] [default to null] |
 | **apply** | [**DeviceAssignmentCriteria**](DeviceAssignmentCriteria.md) | Device assignment filter criteria | [optional] [default to null] |
+| **frequency** | **String** | Frequency of the maintenance | [optional] [default to null] |
+| **equipmentId** | **String** | ID of the equipment | [optional] [default to null] |
+| **requiredSkills** | **List** | List of required skills | [optional] [default to null] |
+| **tasks** | **List** | List of specific maintenance tasks | [optional] [default to null] |
 | **onTime** | [**TimeBasedTrigger**](TimeBasedTrigger.md) | Time-based maintenance trigger definition | [optional] [default to null] |
 | **onUsage** | [**UsageBasedTrigger**](UsageBasedTrigger.md) | Usage-based maintenance trigger definition | [optional] [default to null] |
 | **onConditions** | [**List**](ConditionBasedTrigger.md) | Condition-based maintenance trigger definitions. Conditions are combined using logical AND. | [optional] [default to null] |

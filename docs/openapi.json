@@ -12,33 +12,139 @@
     "basicAuth" : [ ]
   } ],
   "paths" : {
+    "/api/maintenance/plans/{id}" : {
+      "get" : {
+        "tags" : [ "maintenance-plan-controller" ],
+        "summary" : "GET maintenance plan by Id",
+        "description" : "Returns maintenance plan by internal Id",
+        "operationId" : "getMaintenancePlan",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "description" : "Internal maintenance plan Id",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MaintenancePlan"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Not Found",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MaintenancePlan"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put" : {
+        "tags" : [ "maintenance-plan-controller" ],
+        "operationId" : "updateMaintenancePlan",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/MaintenancePlan"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MaintenancePlan"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete" : {
+        "tags" : [ "maintenance-plan-controller" ],
+        "operationId" : "deleteMaintenancePlan",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        }
+      }
+    },
     "/api/maintenance/plans" : {
       "get" : {
         "tags" : [ "maintenance-plan-controller" ],
-        "summary" : "Get all active maintenance plans with optional filtering and pagination",
-        "description" : "Returns a list of all maintenance plans in IoT Platform. Additional query parameters allow to filter that list. The default configuration will return all active maintenance plans!",
-        "operationId" : "getActiveMaintenancePlansByType",
+        "operationId" : "getAllMaintenancePlans",
         "parameters" : [ {
-          "name" : "type",
+          "name" : "active",
           "in" : "query",
-          "description" : "Maintenance plan type",
+          "required" : false,
           "schema" : {
-            "type" : "string"
+            "type" : "boolean"
+          }
+        }, {
+          "name" : "startDate",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        }, {
+          "name" : "endDate",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "date-time"
           }
         }, {
           "name" : "pageSize",
           "in" : "query",
-          "description" : "Maximum number of items to return (default: 20, max: 100)",
+          "required" : false,
           "schema" : {
             "type" : "integer",
+            "format" : "int32",
             "default" : 20
           }
         }, {
           "name" : "pageNumber",
           "in" : "query",
-          "description" : "Number of items to skip (default: 0)",
+          "required" : false,
           "schema" : {
             "type" : "integer",
+            "format" : "int32",
             "default" : 0
           }
         } ],
@@ -143,38 +249,30 @@
         }
       }
     },
-    "/api/maintenance/plans/{id}" : {
-      "get" : {
+    "/api/maintenance/plans/ai" : {
+      "post" : {
         "tags" : [ "maintenance-plan-controller" ],
-        "summary" : "GET maintenance plan by Id",
-        "description" : "Returns maintenance plan by internal Id",
-        "operationId" : "getMaintenancePlan",
-        "parameters" : [ {
-          "name" : "id",
-          "in" : "path",
-          "description" : "Internal maintenance plan Id",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
+        "operationId" : "proposeMaintenancePlan",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "object",
+                "additionalProperties" : {
+                  "type" : "string"
+                }
+              }
+            }
+          },
+          "required" : true
+        },
         "responses" : {
           "200" : {
             "description" : "OK",
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/MaintenancePlan"
-                }
-              }
-            }
-          },
-          "404" : {
-            "description" : "Not Found",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/MaintenancePlan"
+                  "type" : "object"
                 }
               }
             }
@@ -266,6 +364,212 @@
         },
         "required" : [ "operator", "subscription", "value", "valueFragment" ]
       },
+      "MaintenancePlan" : {
+        "type" : "object",
+        "description" : "Represents a complete maintenance plan with all fields including generated ID",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "description" : "Internal ID, set by Cumulocity",
+            "example" : 1234,
+            "readOnly" : true
+          },
+          "name" : {
+            "type" : "string",
+            "description" : "The name of the maintenance plan",
+            "example" : "Monthly Equipment Check"
+          },
+          "description" : {
+            "type" : "string",
+            "description" : "Detailed description of the maintenance plan",
+            "example" : "Monthly maintenance check for all production equipment"
+          },
+          "notificationClass" : {
+            "type" : "string",
+            "description" : "Maintenance notification class which initializes the maintenance notification class",
+            "enum" : [ "ALARM", "EVENT" ],
+            "example" : "ALARM"
+          },
+          "notificationText" : {
+            "type" : "string",
+            "description" : "Maintenance text which can be used to initialize the maintenance alarm text"
+          },
+          "notificationType" : {
+            "type" : "string",
+            "description" : "Maintenance type which can be used to initialize the maintenance notification type"
+          },
+          "notificationSeverity" : {
+            "type" : "string",
+            "description" : "Maintenance severity which can be used to initialize the maintenance notification severity",
+            "enum" : [ "CRITICAL", "MAJOR", "MINOR", "WARNING" ],
+            "example" : "CRITICAL"
+          },
+          "startDate" : {
+            "type" : "string",
+            "format" : "date-time",
+            "description" : "Start date",
+            "example" : "2025-01-01T09:00:00Z"
+          },
+          "endDate" : {
+            "type" : "string",
+            "format" : "date-time",
+            "description" : "End date and time for the maintenance",
+            "example" : "2025-12-31T17:00:00Z"
+          },
+          "active" : {
+            "type" : "boolean",
+            "description" : "Indicates whether the maintenance plan is active",
+            "example" : true
+          },
+          "on" : {
+            "type" : "array",
+            "description" : "List of triggers (combined view)",
+            "items" : {
+              "$ref" : "#/components/schemas/MaintenanceTrigger"
+            }
+          },
+          "apply" : {
+            "$ref" : "#/components/schemas/DeviceAssignmentCriteria",
+            "description" : "Device assignment filter criteria"
+          },
+          "frequency" : {
+            "type" : "string",
+            "description" : "Frequency of the maintenance"
+          },
+          "equipmentId" : {
+            "type" : "string",
+            "description" : "ID of the equipment"
+          },
+          "requiredSkills" : {
+            "type" : "array",
+            "description" : "List of required skills",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "tasks" : {
+            "type" : "array",
+            "description" : "List of specific maintenance tasks",
+            "items" : {
+              "type" : "object"
+            }
+          },
+          "onTime" : {
+            "$ref" : "#/components/schemas/TimeBasedTrigger",
+            "description" : "Time-based maintenance trigger definition"
+          },
+          "onUsage" : {
+            "$ref" : "#/components/schemas/UsageBasedTrigger",
+            "description" : "Usage-based maintenance trigger definition"
+          },
+          "onConditions" : {
+            "type" : "array",
+            "description" : "Condition-based maintenance trigger definitions. Conditions are combined using logical AND.",
+            "items" : {
+              "$ref" : "#/components/schemas/ConditionBasedTrigger"
+            }
+          }
+        },
+        "required" : [ "endDate", "id", "name", "notificationClass", "notificationType", "startDate" ]
+      },
+      "MaintenanceTrigger" : {
+        "type" : "object",
+        "description" : "Defines a specific trigger condition for maintenance",
+        "properties" : {
+          "type" : {
+            "type" : "string",
+            "description" : "Type of the trigger (e.g., TIME, USAGE, CONDITION)",
+            "example" : "TIME"
+          },
+          "value" : {
+            "type" : "string",
+            "description" : "Value for the trigger threshold",
+            "example" : 100
+          },
+          "unit" : {
+            "type" : "string",
+            "description" : "Unit for the trigger (e.g., HOURS, DAYS, COUNTS)",
+            "example" : "DAYS"
+          }
+        }
+      },
+      "Subscription" : {
+        "type" : "object",
+        "description" : "Subscription details for Usage-based and Condition-based triggers",
+        "properties" : {
+          "api" : {
+            "type" : "string",
+            "description" : "API endpoint to subscribe to",
+            "example" : "measurements"
+          },
+          "typeFilter" : {
+            "type" : "string",
+            "description" : "Type filter for subscription",
+            "example" : "c8y_Temperature"
+          }
+        },
+        "required" : [ "api" ]
+      },
+      "TimeBasedTrigger" : {
+        "type" : "object",
+        "description" : "Time-based maintenance trigger definition",
+        "properties" : {
+          "interval" : {
+            "type" : "string",
+            "description" : "ISO 8601 duration interval (e.g., 'PT1H' for 1 hour)",
+            "example" : "PT1H"
+          },
+          "cronExpression" : {
+            "type" : "string",
+            "description" : "Cron expression (Spring/Quartz 6-field format). Example: '0 0 9 * * 1' (Monday at 9am)",
+            "example" : 0
+          }
+        }
+      },
+      "UsageBasedTrigger" : {
+        "type" : "object",
+        "description" : "Usage-based maintenance trigger based on counters and thresholds",
+        "properties" : {
+          "type" : {
+            "type" : "string",
+            "description" : "Type of trigger",
+            "example" : "Usage-based"
+          },
+          "counter" : {
+            "$ref" : "#/components/schemas/UsageCounter",
+            "description" : "Usage counter configuration"
+          }
+        },
+        "required" : [ "counter", "type" ]
+      },
+      "UsageCounter" : {
+        "type" : "object",
+        "description" : "Single counter for usage-based maintenance defining criteria for triggers",
+        "properties" : {
+          "subscription" : {
+            "$ref" : "#/components/schemas/Subscription",
+            "description" : "Subscription details"
+          },
+          "valueFragment" : {
+            "type" : "string",
+            "description" : "Value fragment to monitor",
+            "example" : "c8y_Temperature.T.value"
+          },
+          "cycleValue" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "Cycle value for counter reset",
+            "example" : 1000
+          },
+          "thresholdValue" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "Threshold value to trigger maintenance",
+            "example" : 800
+          }
+        },
+        "required" : [ "subscription", "valueFragment" ]
+      },
       "MaintenancePlanCreate" : {
         "type" : "object",
         "description" : "Schema for creating a new maintenance plan, excluding the auto-generated ID",
@@ -317,9 +621,38 @@
             "description" : "Indicates whether the maintenance plan is active",
             "example" : true
           },
+          "on" : {
+            "type" : "array",
+            "description" : "List of triggers (combined view)",
+            "items" : {
+              "$ref" : "#/components/schemas/MaintenanceTrigger"
+            }
+          },
           "apply" : {
             "$ref" : "#/components/schemas/DeviceAssignmentCriteria",
             "description" : "Device assignment filter criteria"
+          },
+          "frequency" : {
+            "type" : "string",
+            "description" : "Frequency of the maintenance"
+          },
+          "equipmentId" : {
+            "type" : "string",
+            "description" : "ID of the equipment"
+          },
+          "requiredSkills" : {
+            "type" : "array",
+            "description" : "List of required skills",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "tasks" : {
+            "type" : "array",
+            "description" : "List of specific maintenance tasks",
+            "items" : {
+              "type" : "object"
+            }
           },
           "onTime" : {
             "$ref" : "#/components/schemas/TimeBasedTrigger",
@@ -339,192 +672,32 @@
         },
         "required" : [ "endDate", "name", "notificationClass", "startDate" ]
       },
-      "Subscription" : {
-        "type" : "object",
-        "description" : "Subscription details for Usage-based and Condition-based triggers",
-        "properties" : {
-          "api" : {
-            "type" : "string",
-            "description" : "API endpoint to subscribe to",
-            "example" : "measurements"
-          },
-          "typeFilter" : {
-            "type" : "string",
-            "description" : "Type filter for subscription",
-            "example" : "c8y_Temperature"
-          }
-        },
-        "required" : [ "api" ]
-      },
-      "TimeBasedTrigger" : {
-        "type" : "object",
-        "description" : "Time-based maintenance trigger definition using cron expressions",
-        "properties" : {
-          "cronExpression" : {
-            "type" : "string",
-            "description" : "Cron expression (6-field format (Spring/Quartz standard) for scheduling (e.g., '0 0 9 * * 1' for every Monday at 9:00 AM)",
-            "example" : 0
-          }
-        },
-        "required" : [ "cronExpression" ]
-      },
-      "UsageBasedTrigger" : {
-        "type" : "object",
-        "description" : "Usage-based maintenance trigger based on counters and thresholds",
-        "properties" : {
-          "type" : {
-            "type" : "string",
-            "description" : "Type of trigger",
-            "example" : "Usage-based"
-          },
-          "counter" : {
-            "$ref" : "#/components/schemas/UsageCounter",
-            "description" : "Usage counter configuration"
-          }
-        },
-        "required" : [ "counter", "type" ]
-      },
-      "UsageCounter" : {
-        "type" : "object",
-        "description" : "Single counter for usage-based maintenance defining criteria for triggers",
-        "properties" : {
-          "subscription" : {
-            "$ref" : "#/components/schemas/Subscription",
-            "description" : "Subscription details"
-          },
-          "valueFragment" : {
-            "type" : "string",
-            "description" : "Value fragment to monitor",
-            "example" : "c8y_Temperature.T.value"
-          },
-          "cycleValue" : {
-            "type" : "integer",
-            "format" : "int32",
-            "description" : "Cycle value for counter reset",
-            "example" : 1000
-          },
-          "thresholdValue" : {
-            "type" : "integer",
-            "format" : "int32",
-            "description" : "Threshold value to trigger maintenance",
-            "example" : 800
-          }
-        },
-        "required" : [ "subscription", "valueFragment" ]
-      },
-      "MaintenancePlan" : {
-        "type" : "object",
-        "description" : "Represents a complete maintenance plan with all fields including generated ID",
-        "properties" : {
-          "id" : {
-            "type" : "string",
-            "description" : "Internal ID, set by Cumulocity",
-            "example" : 1234,
-            "readOnly" : true
-          },
-          "name" : {
-            "type" : "string",
-            "description" : "The name of the maintenance plan",
-            "example" : "Monthly Equipment Check"
-          },
-          "description" : {
-            "type" : "string",
-            "description" : "Detailed description of the maintenance plan",
-            "example" : "Monthly maintenance check for all production equipment"
-          },
-          "notificationClass" : {
-            "type" : "string",
-            "description" : "Maintenance notification class which initializes the maintenance notification class",
-            "enum" : [ "ALARM", "EVENT" ],
-            "example" : "ALARM"
-          },
-          "notificationText" : {
-            "type" : "string",
-            "description" : "Maintenance text which can be used to initialize the maintenance alarm text"
-          },
-          "notificationType" : {
-            "type" : "string",
-            "description" : "Maintenance type which can be used to initialize the maintenance notification type"
-          },
-          "notificationSeverity" : {
-            "type" : "string",
-            "description" : "Maintenance severity which can be used to initialize the maintenance notification severity",
-            "enum" : [ "CRITICAL", "MAJOR", "MINOR", "WARNING" ],
-            "example" : "CRITICAL"
-          },
-          "startDate" : {
-            "type" : "string",
-            "format" : "date-time",
-            "description" : "Start date and time for the maintenance",
-            "example" : "2025-01-01T09:00:00Z"
-          },
-          "endDate" : {
-            "type" : "string",
-            "format" : "date-time",
-            "description" : "End date and time for the maintenance",
-            "example" : "2025-12-31T17:00:00Z"
-          },
-          "active" : {
-            "type" : "boolean",
-            "description" : "Indicates whether the maintenance plan is active",
-            "example" : true
-          },
-          "apply" : {
-            "$ref" : "#/components/schemas/DeviceAssignmentCriteria",
-            "description" : "Device assignment filter criteria"
-          },
-          "onTime" : {
-            "$ref" : "#/components/schemas/TimeBasedTrigger",
-            "description" : "Time-based maintenance trigger definition"
-          },
-          "onUsage" : {
-            "$ref" : "#/components/schemas/UsageBasedTrigger",
-            "description" : "Usage-based maintenance trigger definition"
-          },
-          "onConditions" : {
-            "type" : "array",
-            "description" : "Condition-based maintenance trigger definitions. Conditions are combined using logical AND.",
-            "items" : {
-              "$ref" : "#/components/schemas/ConditionBasedTrigger"
-            }
-          }
-        },
-        "required" : [ "id", "name", "notificationClass", "notificationType", "startDate" ]
-      },
       "MaintenanceAction" : {
         "type" : "object",
-        "description" : "Represents a maintenance action for a device",
+        "description" : "Action performed on a maintenance plan (e.g. starting or completing work)",
         "properties" : {
           "deviceId" : {
             "type" : "string",
-            "description" : "Device Internal ID",
-            "example" : 1234
+            "description" : "The ID of the device being maintained",
+            "example" : 10200
           },
           "status" : {
             "type" : "string",
-            "description" : "Maintenance status",
+            "description" : "The current status of the maintenance",
             "enum" : [ "SCHEDULED", "IN_PROGRESS", "COMPLETED", "CANCELLED" ],
-            "example" : "SCHEDULED"
+            "example" : "IN_PROGRESS"
           },
           "notification" : {
             "type" : "string",
-            "description" : "Additional notification message",
-            "example" : "Maintenance scheduled for next week"
+            "description" : "Optional text for the event or alarm",
+            "example" : "Technician arrived on site"
           }
-        },
-        "required" : [ "deviceId", "status" ]
+        }
       },
       "MaintenancePlanListResponse" : {
         "type" : "object",
-        "description" : "Response wrapper for paginated maintenance plan list results",
+        "description" : "Response containing a list of maintenance plans",
         "properties" : {
-          "maintenancePlans" : {
-            "type" : "array",
-            "description" : "List of maintenance plans",
-            "items" : {
-              "$ref" : "#/components/schemas/MaintenancePlan"
-            }
-          },
           "currentPage" : {
             "type" : "integer",
             "format" : "int32",
@@ -548,9 +721,16 @@
             "format" : "int64",
             "description" : "Total number of elements across all pages",
             "example" : 42
+          },
+          "maintenancePlans" : {
+            "type" : "array",
+            "description" : "List of maintenance plans",
+            "items" : {
+              "$ref" : "#/components/schemas/MaintenancePlan"
+            }
           }
         },
-        "required" : [ "currentPage", "maintenancePlans", "pageSize" ]
+        "required" : [ "pageSize" ]
       }
     },
     "securitySchemes" : {

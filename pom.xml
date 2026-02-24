@@ -1,9 +1,8 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
-                             http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<?xml version="1.0" encoding="UTF-8"?>
 
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>cumulocity.microservice</groupId>
@@ -11,52 +10,29 @@
     <version>1.0.0-SNAPSHOT</version>
 
     <properties>
-        <java.version>17</java.version>
-        <maven.compiler.release>17</maven.compiler.release>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
-        <microservice.java.version>17</microservice.java.version>
-
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-
-        <c8y.version>2025.81.0</c8y.version>
-        <microservice.name>maintenance-module</microservice.name>
-        <c8y.docker.skip>true</c8y.docker.skip>
-
-        <spring-ai.version>1.0.0-M6</spring-ai.version>
-        <swagger.version>2.2.22</swagger.version>
+        <java.version>17</java.version>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
-        <lombok.version>1.18.36</lombok.version>
-        <springdoc-openapi.version>2.7.0</springdoc-openapi.version>
-        <spring-boot-dependencies.version>3.3.7</spring-boot-dependencies.version>
-        <openapi-generator-maven-plugin-version>6.3.0</openapi-generator-maven-plugin-version>
+        <spring-boot-dependencies.version>3.5.7</spring-boot-dependencies.version>
+        <c8y.version>2025.81.0</c8y.version>
+        <microservice.name>maintenance-module</microservice.name>
+        <c8y.docker.skip>false</c8y.docker.skip>
+        <springdoc-openapi.version>2.8.3</springdoc-openapi.version>
+        <openapi-generator-maven-plugin-version>7.19.0</openapi-generator-maven-plugin-version>
+        <spring-ai.version>1.0.0-M6</spring-ai.version>
     </properties>
 
-    <repositories>
-        <repository>
-            <id>spring-milestones</id>
-            <name>Spring Milestones</name>
-            <url>https://repo.spring.io/milestone</url>
-        </repository>
-        <repository>
-            <id>cumulocity</id>
-            <name>Cumulocity</name>
-            <layout>default</layout>
-            <url>https://download.cumulocity.com/maven/repository</url>
-        </repository>
-    </repositories>
-
-	<dependencyManagement>
-		<dependencies>
-			<dependency>
-				<groupId>com.nsn.cumulocity.clients-java</groupId>
-				<artifactId>microservice-dependencies</artifactId>
-				<version>${c8y.version}</version>
-				<type>pom</type>
-				<scope>import</scope>
-			</dependency>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.nsn.cumulocity.clients-java</groupId>
+                <artifactId>microservice-dependencies</artifactId>
+                <version>${c8y.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
             <dependency>
                 <groupId>org.springframework.ai</groupId>
                 <artifactId>spring-ai-bom</artifactId>
@@ -64,75 +40,75 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
-		</dependencies>
-	</dependencyManagement>
+        </dependencies>
+    </dependencyManagement>
 
-	<dependencies>
-		<dependency>
-			<groupId>com.nsn.cumulocity.clients-java</groupId>
-			<artifactId>microservice-autoconfigure</artifactId>
-			<version>${c8y.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>com.nsn.cumulocity.model</groupId>
-			<artifactId>device-capability-model</artifactId>
-			<version>${c8y.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-actuator</artifactId>
-		</dependency>
+    <dependencies>
+        <dependency>
+            <groupId>com.nsn.cumulocity.clients-java</groupId>
+            <artifactId>microservice-autoconfigure</artifactId>
+            <version>${c8y.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.nsn.cumulocity.model</groupId>
+            <artifactId>device-capability-model</artifactId>
+            <version>${c8y.version}</version>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-validation</artifactId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.junit.vintage</groupId>
+                    <artifactId>junit-vintage-engine</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.springframework.ai</groupId>
             <artifactId>spring-ai-openai-spring-boot-starter</artifactId>
+            <version>${spring-ai.version}</version>
         </dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-test</artifactId>
-			<scope>test</scope>
-			<exclusions>
-				<exclusion>
-					<groupId>org.junit.vintage</groupId>
-					<artifactId>junit-vintage-engine</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
 
+        <!-- Lombok for reducing boilerplate code -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>${lombok.version}</version>
             <scope>provided</scope>
         </dependency>
+
         <dependency>
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-joda</artifactId>
         </dependency>
 
+        <!-- Validation API -->
         <dependency>
-            <groupId>io.swagger.core.v3</groupId>
-            <artifactId>swagger-annotations</artifactId>
-            <version>${swagger.version}</version>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
+
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
             <version>${springdoc-openapi.version}</version>
         </dependency>
-
         <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-core</artifactId>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-junit-jupiter</artifactId>
-            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.junit.vintage</groupId>
+                    <artifactId>junit-vintage-engine</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.springframework.restdocs</groupId>
@@ -141,164 +117,157 @@
         </dependency>
     </dependencies>
 
-	<build>
-		<resources>
-			<resource>
-				<directory>${basedir}/src/main/resources</directory>
-				<filtering>true</filtering>
-				<includes>
-					<include>**/application*.properties</include>
-					<include>**/application.properties</include>
-                    <include>**/*.json</include>
+    <build>
+        <resources>
+            <resource>
+                <directory>${basedir}/src/main/resources</directory>
+                <filtering>true</filtering>
+                <includes>
+                    <include>**/application*.properties</include>
+                    <include>**/application.properties</include>
                     <include>**/banner.txt</include>
-				</includes>
-			</resource>
-		</resources>
+                </includes>
+            </resource>
+        </resources>
 
-		<plugins>
-			<plugin>
-				<groupId>org.springframework.boot</groupId>
-				<artifactId>spring-boot-maven-plugin</artifactId>
-				<version>${spring-boot-dependencies.version}</version>
-				<configuration>
-					<mainClass>cumulocity.microservice.maintenancemodule.App</mainClass>
-					<jvmArguments>-Dspring.application.admin.enabled=true  -Dspring.profiles.active=dev</jvmArguments>
-				</configuration>
-				<executions>
-					<execution>
-						<goals>
-							<goal>repackage</goal>
-						</goals>
-					</execution>
-					<!-- Only include these if you need integration tests with auto-start/stop -->
-					<execution>
-						<id>pre-integration-test</id>
-						<goals>
-							<goal>start</goal>
-						</goals>
-					</execution>
-					<execution>
-						<id>post-integration-test</id>
-						<goals>
-							<goal>stop</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.11.0</version>
-				<configuration>
-                    <release>17</release>
-                    <parameters>true</parameters>
-                    <annotationProcessorPaths>
-                        <path>
-                            <groupId>org.projectlombok</groupId>
-                            <artifactId>lombok</artifactId>
-                            <version>${lombok.version}</version>
-                        </path>
-                    </annotationProcessorPaths>
-					<source>${java.version}</source>
-					<target>${java.version}</target>
-					<compilerArgs>
-						<arg>-parameters</arg>
-					</compilerArgs>
-				</configuration>
-			</plugin>
-
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <version>${spring-boot-dependencies.version}</version>
+                <configuration>
+                    <mainClass>cumulocity.microservice.maintenancemodule.App</mainClass>
+                    <jvmArguments>-Dspring.application.admin.enabled=true  -Dspring.profiles.active=dev</jvmArguments>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>repackage</goal>
+                        </goals>
+                    </execution>
+                    <!-- Only include these if you need integration tests with auto-start/stop -->
+                    <execution>
+                        <id>pre-integration-test</id>
+                        <goals>
+                            <goal>start</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>post-integration-test</id>
+                        <goals>
+                            <goal>stop</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-resources-plugin</artifactId>
-                <version>3.3.1</version>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.11.0</version>
                 <configuration>
-                    <propertiesEncoding>UTF-8</propertiesEncoding>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
+                    <compilerArgs>
+                        <arg>-parameters</arg>
+                    </compilerArgs>
                 </configuration>
             </plugin>
-
-			<plugin>
-				<groupId>com.nsn.cumulocity.clients-java</groupId>
-				<artifactId>microservice-package-maven-plugin</artifactId>
-				<version>${c8y.version}</version>
-				<executions>
-					<execution>
-						<id>package</id>
-						<phase>package</phase>
-						<goals>
-							<goal>package</goal>
-						</goals>
-						<configuration>
-							<name>${microservice.name}</name>
-							<image>${microservice.name}</image>
-							<encoding>UTF-8</encoding>
-							<skip>${c8y.docker.skip}</skip>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
-
-			<plugin>
-				<groupId>org.springdoc</groupId>
-				<artifactId>springdoc-openapi-maven-plugin</artifactId>
-				<version>1.4</version>
-				<executions>
-					<execution>
-						<id>integration-test</id>
-						<goals>
-							<goal>generate</goal>
-						</goals>
-					</execution>
-				</executions>
-				<configuration>
-					<apiDocsUrl>http://localhost:8080/v3/api-docs</apiDocsUrl>
-					<outputFileName>openapi.json</outputFileName>
-					<outputDir>${project.basedir}/docs</outputDir>
-				</configuration>
-			</plugin>
-			<plugin>
-				<!-- converts the openapi docu to markdown -->
-				<groupId>org.openapitools</groupId>
-				<artifactId>openapi-generator-maven-plugin</artifactId>
-				<version>${openapi-generator-maven-plugin-version}</version>
-				<executions>
-					<execution>
-						<id>export-openapi-to-html-doc</id>
-						<phase>post-integration-test</phase>
-						<goals>
-							<goal>generate</goal>
-						</goals>
-						<configuration>
-							<inputSpec>${project.basedir}/docs/openapi.json</inputSpec>
-							<generatorName>markdown</generatorName>
-							<output>${project.basedir}/docs</output>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-release-plugin</artifactId>
-				<version>3.0.0-M1</version>
-				<configuration>
-					<goals>deploy</goals>
-					<autoVersionSubmodules>true</autoVersionSubmodules>
-					<releaseProfiles>release</releaseProfiles>
-					<tagNameFormat>v@{project.version}</tagNameFormat>
-				</configuration>
-			</plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.0.0-M7</version>
             </plugin>
-		</plugins>
-	</build>
+            <plugin>
+                <groupId>com.nsn.cumulocity.clients-java</groupId>
+                <artifactId>microservice-package-maven-plugin</artifactId>
+                <version>${c8y.version}</version>
+                <executions>
+                    <execution>
+                        <id>package</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>package</goal>
+                        </goals>
+                        <configuration>
+                            <name>${microservice.name}</name>
+                            <image>${microservice.name}</image>
+                            <encoding>UTF-8</encoding>
+                            <skip>${c8y.docker.skip}</skip>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
 
-	<pluginRepositories>
-		<pluginRepository>
-			<id>public</id>
-			<url>https://download.cumulocity.com/maven/repository</url>
-		</pluginRepository>
-	</pluginRepositories>
+            <plugin>
+                <groupId>org.springdoc</groupId>
+                <artifactId>springdoc-openapi-maven-plugin</artifactId>
+                <version>1.5</version>
+                <executions>
+                    <execution>
+                        <id>integration-test</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <apiDocsUrl>http://localhost:8080/v3/api-docs</apiDocsUrl>
+                    <outputFileName>openapi.json</outputFileName>
+                    <outputDir>${project.basedir}/docs</outputDir>
+                </configuration>
+            </plugin>
+            <plugin>
+                <!-- converts the openapi docu to markdown -->
+                <groupId>org.openapitools</groupId>
+                <artifactId>openapi-generator-maven-plugin</artifactId>
+                <version>${openapi-generator-maven-plugin-version}</version>
+                <executions>
+                    <execution>
+                        <id>export-openapi-to-markdown-doc</id>
+                        <phase>post-integration-test</phase>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <inputSpec>${project.basedir}/docs/openapi.json</inputSpec>
+                            <generatorName>markdown</generatorName>
+                            <output>${project.basedir}/docs</output>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-release-plugin</artifactId>
+                <version>3.0.0-M1</version>
+                <configuration>
+                    <goals>deploy</goals>
+                    <autoVersionSubmodules>true</autoVersionSubmodules>
+                    <releaseProfiles>release</releaseProfiles>
+                    <tagNameFormat>v@{project.version}</tagNameFormat>
+                </configuration>
+            </plugin>
+
+        </plugins>
+    </build>
+
+    <repositories>
+        <repository>
+            <id>cumulocity</id>
+            <layout>default</layout>
+            <url>https://download.cumulocity.com/maven/repository</url>
+        </repository>
+        <repository>
+            <id>spring-milestones</id>
+            <name>Spring Milestones</name>
+            <url>https://repo.spring.io/milestone</url>
+        </repository>
+    </repositories>
+    <pluginRepositories>
+        <pluginRepository>
+            <id>public</id>
+            <url>https://download.cumulocity.com/maven/repository</url>
+        </pluginRepository>
+    </pluginRepositories>
 
 </project>
