@@ -8,9 +8,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.bind.annotation.PutMapping;
 
 import cumulocity.microservice.maintenancemodule.model.MaintenanceAction;
 import cumulocity.microservice.maintenancemodule.model.MaintenancePlan;
@@ -18,7 +16,6 @@ import cumulocity.microservice.maintenancemodule.model.MaintenancePlanCreate;
 import cumulocity.microservice.maintenancemodule.model.MaintenancePlanListResponse;
 import cumulocity.microservice.maintenancemodule.service.c8y.MaintenanceActionService;
 import cumulocity.microservice.maintenancemodule.service.c8y.MaintenancePlanService;
-import cumulocity.microservice.maintenancemodule.model.MaintenancePlanProposal;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -53,17 +50,17 @@ public class MaintenancePlanController {
      * Accepts a user prompt and returns a proposed maintenance plan JSON structure.
      */
     @PostMapping(path = "/ai", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> proposeMaintenancePlan(@RequestBody Map<String, String> body) {
+    public ResponseEntity<MaintenancePlan> proposeMaintenancePlan(@RequestBody Map<String, String> body) {
         String prompt = body.get("user prompt");
         if (prompt == null || prompt.isBlank()) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
 
         try {
-            MaintenancePlanProposal proposal = maintenancePlanService.proposeMaintenancePlan(prompt);
+            MaintenancePlan proposal = maintenancePlanService.proposeMaintenancePlan(prompt);
             return new ResponseEntity<>(proposal, HttpStatus.OK);
         } catch (IllegalArgumentException e) {
-            return new ResponseEntity<>(Map.of("error", e.getMessage()), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
