@@ -1,0 +1,31 @@
+name: Build Cumulocity Microservice
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Build Microservice Zip (with Docker enabled)
+        run: mvn clean install -Dc8y.docker.skip=false
+
+      - name: Upload Zip Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cumulocity-maintenance-module-zip
+          path: target/*.zip
+          retention-days: 5
