@@ -2,7 +2,7 @@ name: Build Cumulocity Microservice
 
 on:
   push:
-    branches: [ "main", "master" ]
+    branches: [ "main", "master", "MaintenacePlanUserPrompt" ]
   workflow_dispatch:
 
 jobs:
