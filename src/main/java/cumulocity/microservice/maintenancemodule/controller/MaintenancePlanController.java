@@ -45,10 +45,7 @@ public class MaintenancePlanController {
         this.maintenanceActionService = maintenanceActionService;
     }
 
-    /**
-     * AI Proposal Endpoint
-     * Accepts a user prompt and returns a proposed maintenance plan JSON structure.
-     */
+    @Operation(summary = "Propose a maintenance plan based on user prompt", description = "Generates a maintenance plan proposal using AI based on the provided user prompt", tags = {})
     @PostMapping(path = "/ai", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<MaintenancePlan> proposeMaintenancePlan(@RequestBody Map<String, String> body) {
         String prompt = body.get("user prompt");
@@ -66,16 +63,12 @@ public class MaintenancePlanController {
         }
     }
 
-    /**
-     * Get all maintenance plans with optional filtering and pagination
-     *
-     * @param active Filter by active status (optional)
-     * @param startDate Filter plans starting after this date (optional)
-     * @param endDate Filter plans ending before this date (optional)
-     * @param pageSize Maximum number of items to return (default: 20)
-     * @param pageNumber Number of items to skip (default: 0)
-     * @return List of maintenance plans with pagination information
-     */
+    @Operation(summary = "Get all  maintenance plans with optional filtering and pagination", description = "Returns a list of all maintenance plans in IoT Platform. Additional query parameters allow to filter that list. The default configuration will return all active maintenance plans!", tags = {}, parameters = {
+            @Parameter(in = ParameterIn.QUERY, name = "active", description = "Filter by active status", schema = @Schema(type = "boolean")),
+            @Parameter(in = ParameterIn.QUERY, name = "startDate", description = "Filter plans starting after this date (ISO 8601 format)", schema = @Schema(type = "string", format = "date-time")),
+            @Parameter(in = ParameterIn.QUERY, name = "endDate", description = "Filter plans ending before this date (ISO 8601 format)", schema = @Schema(type = "string", format = "date-time")),
+            @Parameter(in = ParameterIn.QUERY, name = "pageSize", description = "Maximum number of items to return (default: 20, max: 100)", schema = @Schema(type = "integer", defaultValue = "20")),
+            @Parameter(in = ParameterIn.QUERY, name = "pageNumber", description = "Number of items to skip (default: 0)", schema = @Schema(type = "integer", defaultValue = "0")) })
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<MaintenancePlanListResponse> getAllMaintenancePlans(
             @RequestParam(required = false) Boolean active,
@@ -100,12 +93,6 @@ public class MaintenancePlanController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    /**
-     * Create a new maintenance plan
-     *
-     * @param maintenancePlanCreate The maintenance plan to create
-     * @return The created maintenance plan with generated ID
-     */
     @Operation(summary = "Create a new maintenance plan", description = "Creates a new maintenance plan in IoT Platform", tags = {})
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Created"),
@@ -118,12 +105,6 @@ public class MaintenancePlanController {
         return new ResponseEntity<>(createdPlan, HttpStatus.CREATED);
     }
 
-    /**
-     * Get a specific maintenance plan by ID
-     *
-     * @param id The unique identifier of the maintenance plan
-     * @return The maintenance plan if found
-     */
     @Operation(summary = "GET maintenance plan by Id", description = "Returns maintenance plan by internal Id", parameters = {
             @Parameter(in = ParameterIn.PATH, name = "id", required = true, description = "Internal maintenance plan Id", schema = @Schema(type = "string")) })
 	@ApiResponses(value = {
@@ -160,13 +141,6 @@ public class MaintenancePlanController {
         return new ResponseEntity<MaintenanceAction>(processedMaintenanceAction, HttpStatus.CREATED);
     }
 
-    /**
-     * Update an existing maintenance plan by replacing all fields
-     * 
-     * @param id The unique identifier of the maintenance plan
-     * @param maintenancePlan The updated maintenance plan data
-     * @return The updated maintenance plan
-     */
     @PutMapping(path = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<MaintenancePlan> updateMaintenancePlan(
             @PathVariable String id,
