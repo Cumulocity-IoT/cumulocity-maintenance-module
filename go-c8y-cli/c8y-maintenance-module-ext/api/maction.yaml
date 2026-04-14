@@ -8,7 +8,23 @@ commands:
   - name: create
     description: Create a new maintenance action
     method: POST
-    path: service/maintenance-module/api/maintenance/actions
+    path: service/maintenance-module/api/maintenance/plans/{id}/actions
+    pathParameters:
+      - name: id
+        type: string
+        description: Maintenance plan ID
+        pipeline: true
+        completion:
+          type: external
+          command: 
+            - c8y
+            - maintenance-module-ext
+            - mplan
+            - list
+            - --select 
+            - id,title 
+            - --output 
+            - completion
     body:
       - name: device
         type: string
