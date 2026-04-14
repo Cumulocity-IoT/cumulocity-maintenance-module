@@ -6,8 +6,11 @@ All URIs are relative to *http://localhost:8080*
 |------------- | ------------- | -------------|
 | [**createMaintenanceAction**](MaintenancePlanControllerApi.md#createMaintenanceAction) | **POST** /api/maintenance/plans/{id}/actions | Create a new maintenance action for maintenance plan |
 | [**createMaintenancePlan**](MaintenancePlanControllerApi.md#createMaintenancePlan) | **POST** /api/maintenance/plans | Create a new maintenance plan |
-| [**getActiveMaintenancePlansByType**](MaintenancePlanControllerApi.md#getActiveMaintenancePlansByType) | **GET** /api/maintenance/plans | Get all active maintenance plans with optional filtering and pagination |
+| [**deleteMaintenancePlan**](MaintenancePlanControllerApi.md#deleteMaintenancePlan) | **DELETE** /api/maintenance/plans/{id} |  |
+| [**getAllMaintenancePlans**](MaintenancePlanControllerApi.md#getAllMaintenancePlans) | **GET** /api/maintenance/plans | Get all  maintenance plans with optional filtering and pagination |
 | [**getMaintenancePlan**](MaintenancePlanControllerApi.md#getMaintenancePlan) | **GET** /api/maintenance/plans/{id} | GET maintenance plan by Id |
+| [**proposeMaintenancePlan**](MaintenancePlanControllerApi.md#proposeMaintenancePlan) | **POST** /api/maintenance/plans/ai | Propose a maintenance plan based on user prompt |
+| [**updateMaintenancePlan**](MaintenancePlanControllerApi.md#updateMaintenancePlan) | **PUT** /api/maintenance/plans/{id} |  |
 
 
 <a name="createMaintenanceAction"></a>
@@ -65,11 +68,36 @@ Create a new maintenance plan
 - **Content-Type**: application/json
 - **Accept**: application/json
 
-<a name="getActiveMaintenancePlansByType"></a>
-# **getActiveMaintenancePlansByType**
-> MaintenancePlanListResponse getActiveMaintenancePlansByType(type, pageSize, pageNumber)
+<a name="deleteMaintenancePlan"></a>
+# **deleteMaintenancePlan**
+> deleteMaintenancePlan(id)
 
-Get all active maintenance plans with optional filtering and pagination
+
+
+### Parameters
+
+|Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **id** | **String**|  | [default to null] |
+
+### Return type
+
+null (empty response body)
+
+### Authorization
+
+[basicAuth](../README.md#basicAuth)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: Not defined
+
+<a name="getAllMaintenancePlans"></a>
+# **getAllMaintenancePlans**
+> MaintenancePlanListResponse getAllMaintenancePlans(active, startDate, endDate, pageSize, pageNumber)
+
+Get all  maintenance plans with optional filtering and pagination
 
     Returns a list of all maintenance plans in IoT Platform. Additional query parameters allow to filter that list. The default configuration will return all active maintenance plans!
 
@@ -77,7 +105,9 @@ Get all active maintenance plans with optional filtering and pagination
 
 |Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
-| **type** | **String**| Maintenance plan type | [optional] [default to null] |
+| **active** | **Boolean**| Filter by active status | [optional] [default to null] |
+| **startDate** | **Date**| Filter plans starting after this date (ISO 8601 format) | [optional] [default to null] |
+| **endDate** | **Date**| Filter plans ending before this date (ISO 8601 format) | [optional] [default to null] |
 | **pageSize** | **Integer**| Maximum number of items to return (default: 20, max: 100) | [optional] [default to 20] |
 | **pageNumber** | **Integer**| Number of items to skip (default: 0) | [optional] [default to 0] |
 
@@ -119,5 +149,58 @@ GET maintenance plan by Id
 ### HTTP request headers
 
 - **Content-Type**: Not defined
+- **Accept**: application/json
+
+<a name="proposeMaintenancePlan"></a>
+# **proposeMaintenancePlan**
+> MaintenancePlan proposeMaintenancePlan(request\_body)
+
+Propose a maintenance plan based on user prompt
+
+    Generates a maintenance plan proposal using AI based on the provided user prompt
+
+### Parameters
+
+|Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **request\_body** | [**Map**](../Models/string.md)|  | |
+
+### Return type
+
+[**MaintenancePlan**](../Models/MaintenancePlan.md)
+
+### Authorization
+
+[basicAuth](../README.md#basicAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+<a name="updateMaintenancePlan"></a>
+# **updateMaintenancePlan**
+> MaintenancePlan updateMaintenancePlan(id, MaintenancePlan)
+
+
+
+### Parameters
+
+|Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **id** | **String**|  | [default to null] |
+| **MaintenancePlan** | [**MaintenancePlan**](../Models/MaintenancePlan.md)|  | |
+
+### Return type
+
+[**MaintenancePlan**](../Models/MaintenancePlan.md)
+
+### Authorization
+
+[basicAuth](../README.md#basicAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
 - **Accept**: application/json
 

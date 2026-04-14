@@ -105,13 +105,10 @@
     "/api/maintenance/plans" : {
       "get" : {
         "tags" : [ "maintenance-plan-controller" ],
-        "summary" : "Get all  maintenance plans with optional filtering and pagination",
-        "description" : "Returns a list of all maintenance plans in IoT Platform. Additional query parameters allow to filter that list. The default configuration will return all active maintenance plans!",
         "operationId" : "getAllMaintenancePlans",
         "parameters" : [ {
           "name" : "active",
           "in" : "query",
-          "description" : "Filter by active status",
           "required" : false,
           "schema" : {
             "type" : "boolean"
@@ -119,7 +116,6 @@
         }, {
           "name" : "startDate",
           "in" : "query",
-          "description" : "Filter plans starting after this date (ISO 8601 format)",
           "required" : false,
           "schema" : {
             "type" : "string",
@@ -128,7 +124,6 @@
         }, {
           "name" : "endDate",
           "in" : "query",
-          "description" : "Filter plans ending before this date (ISO 8601 format)",
           "required" : false,
           "schema" : {
             "type" : "string",
@@ -137,19 +132,19 @@
         }, {
           "name" : "pageSize",
           "in" : "query",
-          "description" : "Maximum number of items to return (default: 20, max: 100)",
           "required" : false,
           "schema" : {
             "type" : "integer",
+            "format" : "int32",
             "default" : 20
           }
         }, {
           "name" : "pageNumber",
           "in" : "query",
-          "description" : "Number of items to skip (default: 0)",
           "required" : false,
           "schema" : {
             "type" : "integer",
+            "format" : "int32",
             "default" : 0
           }
         } ],
@@ -257,8 +252,6 @@
     "/api/maintenance/plans/ai" : {
       "post" : {
         "tags" : [ "maintenance-plan-controller" ],
-        "summary" : "Propose a maintenance plan based on user prompt",
-        "description" : "Generates a maintenance plan proposal using AI based on the provided user prompt",
         "operationId" : "proposeMaintenancePlan",
         "requestBody" : {
           "content" : {
@@ -471,13 +464,17 @@
         "type" : "object",
         "description" : "Time-based maintenance trigger definition",
         "properties" : {
+          "interval" : {
+            "type" : "string",
+            "description" : "ISO 8601 duration interval (e.g., 'PT1H' for 1 hour)",
+            "example" : "PT1H"
+          },
           "cronExpression" : {
             "type" : "string",
             "description" : "Cron expression (Spring/Quartz 6-field format). Example: '0 0 9 * * 1' (Monday at 9am)",
             "example" : 0
           }
-        },
-        "required" : [ "cronExpression" ]
+        }
       },
       "UsageBasedTrigger" : {
         "type" : "object",
@@ -616,8 +613,7 @@
             "description" : "Optional text for the event or alarm",
             "example" : "Technician arrived on site"
           }
-        },
-        "required" : [ "deviceId", "notification", "status" ]
+        }
       },
       "MaintenancePlanListResponse" : {
         "type" : "object",
@@ -655,7 +651,7 @@
             }
           }
         },
-        "required" : [ "currentPage", "maintenancePlans", "pageSize", "totalElements", "totalPages" ]
+        "required" : [ "pageSize" ]
       }
     },
     "securitySchemes" : {

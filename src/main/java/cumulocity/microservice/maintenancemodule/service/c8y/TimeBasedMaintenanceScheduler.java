@@ -3,6 +3,7 @@ package cumulocity.microservice.maintenancemodule.service.c8y;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ScheduledFuture;
+import java.time.Duration;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,26 +42,17 @@ public class TimeBasedMaintenanceScheduler {
     @EventListener
     private void onSubscriptionAdded(final MicroserviceSubscriptionAddedEvent event) {
         MicroserviceCredentials credentials = event.getCredentials();
-        
-        log.info("Creating Scheduler task for tenant: {}", credentials.getTenant());
-        ScheduledFuture<?> scheduleWithFixedDelay = taskScheduler.scheduleWithFixedDelay(new Runnable() {
-			
-			@Override
-			public void run() {
-				String tenant = getCredentials().getTenant();
-				
-				log.info("START, scheduled task for tenant: {}", tenant);
-				timeBasedMaintenanceService.runJobWithinContext(getCredentials());
-				log.info("END, scheduled task for tenant: {}", tenant);
-			}
-			
-			private MicroserviceCredentials getCredentials() {
-				return credentials;
-			}
-			
-		}, runRateMillis);
-        
-        scheduledFutureMap.put(credentials.getTenant(), scheduleWithFixedDelay);
+        String tenant = credentials.getTenant();
+
+        log.info("Creating Scheduler task for tenant: {}", tenant);
+
+        ScheduledFuture<?> scheduleWithFixedDelay = taskScheduler.scheduleWithFixedDelay(() -> {
+            log.info("START, scheduled task for tenant: {}", tenant);
+            timeBasedMaintenanceService.runJobWithinContext(credentials);
+            log.info("END, scheduled task for tenant: {}", tenant);
+        }, Duration.ofMillis(runRateMillis));
+
+        scheduledFutureMap.put(tenant, scheduleWithFixedDelay);
     }
     
     /**

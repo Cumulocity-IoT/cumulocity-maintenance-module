@@ -8,29 +8,25 @@ import org.springframework.validation.annotation.Validated;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
+import lombok.AllArgsConstructor;
 
 /**
  * Usage-based maintenance trigger based on counters and thresholds
- * 
- * @author APES
+ * * @author APES
  */
 @Data
-@RequiredArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 @Schema(description = "Usage-based maintenance trigger based on counters and thresholds")
 @Validated
 public class UsageBasedTrigger {
 
-    @Schema(required = true, description = "Type of trigger", example = "Usage-based")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Type of trigger", example = "Usage-based")
     @NotNull
-    @NonNull
     private String type = "Usage-based";
 
-    @Schema(required = true, description = "Usage counter configuration")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Usage counter configuration")
     @NotNull
-    @NonNull
     @Valid
     private UsageCounter counter;
 }

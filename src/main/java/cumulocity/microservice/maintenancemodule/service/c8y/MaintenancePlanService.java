@@ -1,5 +1,7 @@
 package cumulocity.microservice.maintenancemodule.service.c8y;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -7,6 +9,13 @@ import java.util.stream.Collectors;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.messages.SystemMessage;
+import org.springframework.ai.chat.messages.UserMessage;
+import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
 import com.cumulocity.rest.representation.PageStatisticsRepresentation;
@@ -15,6 +24,8 @@ import com.cumulocity.sdk.client.inventory.InventoryApi;
 import com.cumulocity.sdk.client.inventory.InventoryFilter;
 import com.cumulocity.sdk.client.inventory.ManagedObjectCollection;
 import com.cumulocity.sdk.client.inventory.PagedManagedObjectCollectionRepresentation;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.cumulocity.model.idtype.GId;
 import com.cumulocity.sdk.client.QueryParam;
 import com.cumulocity.sdk.client.SDKException;
@@ -39,8 +50,39 @@ public class MaintenancePlanService {
     
     private final InventoryApi inventoryApi;
 
-    public MaintenancePlanService(InventoryApi inventoryApi) {
+    private final ChatClient chatClient;
+    private final ObjectMapper objectMapper;
+
+    private String maintenancePlanJsonSchema;
+
+    @Autowired
+    public MaintenancePlanService(
+            InventoryApi inventoryApi,
+            ChatClient.Builder chatClientBuilder,
+            ObjectMapper objectMapper,
+            @Value("classpath:openapi.json") Resource schemaResource) {
+
         this.inventoryApi = inventoryApi;
+        this.chatClient = chatClientBuilder.build();
+        this.objectMapper = objectMapper;
+
+        String schemaContent = "{}";
+        if (schemaResource.exists()) {
+            try {
+                schemaContent = schemaResource.getContentAsString(StandardCharsets.UTF_8);
+                ObjectMapper mapper = new ObjectMapper();
+                JsonNode openApiDoc = mapper.readTree(schemaContent);
+                JsonNode schemas = openApiDoc.at("/components/schemas");
+                // Get specific schema
+                JsonNode maintenancePlan = schemas.get("MaintenancePlan");
+                maintenancePlanJsonSchema = maintenancePlan.toString();
+                log.info("MaintenancePlan schema loaded {}", maintenancePlanJsonSchema);
+            } catch (IOException e) {
+                log.warn("Failed to read openapi.json", e);
+            }
+        } else {
+            log.warn("openapi.json not found in classpath");
+        }
     }
 
     public MaintenancePlanListResponse getActiveMaintenancePlansByType(MaintenancePlanType maintenancePlanType, Integer pageSize, Integer pageNumber) {
@@ -100,6 +142,70 @@ public class MaintenancePlanService {
             }
         }
         return maintenancePlans;
+    }
+
+    /**
+     * Generates a maintenance plan proposal using AI.
+     * Uses Single-Shot Prompting: The Schema and Guarding rules are sent in one go.
+     */
+    public MaintenancePlan proposeMaintenancePlan(String userPrompt) {
+        // 1. Construct the System Prompt with Guarding, Data Rules & Schema
+        String systemInstructions = """
+            You are a maintenance planning assistant.
+            
+            ### PROMPT GUARDING
+            First, evaluate if the USER PROMPT is related to maintenance, repairs, technical equipment, or schedules.
+            - IF NO: Return exactly: {"error": "Irrelevant prompt"}
+            - IF YES: Proceed to generate the plan.
+            
+            ### DATA HANDLING RULES
+            - If the user does NOT provide an Equipment ID, use "UNKNOWN_EQUIPMENT" as the equipmentId.
+            - Generate a random UUID for the "planId".
+            - "frequency" must be one of: DAILY, WEEKLY, MONTHLY, QUARTERLY, ANNUALLY, AS_NEEDED.
+            
+            ### OUTPUT FORMAT
+            You must return a valid JSON object based strictly on this schema:
+            %s
+            
+            Do not include markdown formatting (like ```json ... ```). Return raw JSON only.
+            """.formatted(maintenancePlanJsonSchema);
+
+        // 2. Call the AI
+        String aiResponse = chatClient.prompt(new Prompt(
+                new SystemMessage(systemInstructions),
+                new UserMessage(userPrompt)
+        )).call().content();
+
+        // 3. Clean and Parse Response
+        String cleanedJson = cleanMarkdown(aiResponse);
+
+        try {
+            // Read as generic node first to check for errors
+            JsonNode rootNode = objectMapper.readTree(cleanedJson);
+
+            // Check if AI triggered the guard rail
+            if (rootNode.has("error")) {
+                log.warn("AI rejected prompt: {}", rootNode.get("error").asText());
+                throw new IllegalArgumentException("Irrelevant prompt: " + rootNode.get("error").asText());
+            }
+
+            // Convert to actual POJO
+            return objectMapper.readValue(cleanedJson, MaintenancePlan.class);
+
+        } catch (IllegalArgumentException e) {
+            throw e; // Re-throw guarding errors
+        } catch (Exception e) {
+            log.error("Failed to parse AI response: {}", cleanedJson, e);
+            throw new RuntimeException("AI generated invalid JSON", e);
+        }
+    }
+
+    private String cleanMarkdown(String input) {
+        if (input == null) return "{}";
+        return input.replaceAll("(?s)^```json", "")
+                .replaceAll("(?s)^```", "")
+                .replaceAll("(?s)```$", "")
+                .trim();
     }
 
     /**
@@ -400,7 +506,7 @@ public class MaintenancePlanService {
      * @throws RuntimeException if plan not found or deletion fails
      * @since 1.0.0
      */
-    public void deleteMaintenancePlan(Integer id) {
+    public void deleteMaintenancePlan(String id) {
         if (id == null) {
             throw new IllegalArgumentException("Maintenance plan ID cannot be null");
         }

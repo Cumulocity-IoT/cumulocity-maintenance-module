@@ -1,33 +1,33 @@
 package cumulocity.microservice.maintenancemodule.model;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
-
+import lombok.Data;
+import lombok.NonNull;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import cumulocity.microservice.maintenancemodule.validation.ValidCron;
 import org.springframework.validation.annotation.Validated;
 
-import cumulocity.microservice.maintenancemodule.validation.ValidCron;
-import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-
 /**
- * Time-based maintenance trigger using cron expressions
- * 
+ * Time-based maintenance trigger definition.
+ * Supports both ISO 8601 intervals and Cron expressions.
+ *
  * @author APES
- * @since 1.0.0
- * @version 1.1.0
  */
 @Data
-@RequiredArgsConstructor
 @NoArgsConstructor
-@Schema(description = "Time-based maintenance trigger definition using cron expressions")
+@AllArgsConstructor
+@Schema(description = "Time-based maintenance trigger definition")
 @Validated
 public class TimeBasedTrigger {
 
-    @Schema(required = true, description = "Cron expression (6-field format (Spring/Quartz standard) for scheduling (e.g., '0 0 9 * * 1' for every Monday at 9:00 AM)", example = "0 0 9 * * 1")
+    @Schema(
+            description = "Cron expression (Spring/Quartz 6-field format). Example: '0 0 9 * * 1' (Monday at 9am)",
+            example = "0 0 9 * * 1"
+    )
+    @ValidCron
     @NotNull
     @NonNull
-    @ValidCron
     private String cronExpression;
 }

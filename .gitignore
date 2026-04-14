@@ -5,8 +5,18 @@
 
 # Java related ignores
 target/
+application-local.properties
 *.class
 *.jar
 
 # Open API generated code
 docs/.openapi-generator/
+
+# IntelliJ IDEA
+.idea/*
+!.idea/runConfigurations/
+*.iml
+*.iws
+*.ipr
+out/
+.DS_Store
