@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.eclipse.jetty.util.ajax.JSON;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,7 +35,6 @@ import cumulocity.microservice.maintenancemodule.model.MaintenancePlan;
 import cumulocity.microservice.maintenancemodule.model.MaintenancePlanCreate;
 import cumulocity.microservice.maintenancemodule.model.MaintenancePlanListResponse;
 import cumulocity.microservice.maintenancemodule.model.MaintenancePlanType;
-import io.swagger.v3.oas.models.OpenAPI;
 
 /**
  * Service for managing maintenance plans with CRUD operations.
@@ -53,7 +51,6 @@ public class MaintenancePlanService {
     private final InventoryApi inventoryApi;
 
     private final ChatClient chatClient;
-    private final String maintenanceSchemaJson;
     private final ObjectMapper objectMapper;
 
     private String maintenancePlanJsonSchema;
@@ -86,7 +83,6 @@ public class MaintenancePlanService {
         } else {
             log.warn("openapi.json not found in classpath");
         }
-        this.maintenanceSchemaJson = schemaContent;
     }
 
     public MaintenancePlanListResponse getActiveMaintenancePlansByType(MaintenancePlanType maintenancePlanType, Integer pageSize, Integer pageNumber) {

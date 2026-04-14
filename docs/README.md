@@ -10,9 +10,9 @@ All URIs are relative to *http://localhost:8080*
 | *MaintenancePlanControllerApi* | [**createMaintenanceAction**](Apis/MaintenancePlanControllerApi.md#createMaintenanceAction) | **POST** /api/maintenance/plans/{id}/actions | Create a new maintenance action for maintenance plan |
 *MaintenancePlanControllerApi* | [**createMaintenancePlan**](Apis/MaintenancePlanControllerApi.md#createMaintenancePlan) | **POST** /api/maintenance/plans | Create a new maintenance plan |
 *MaintenancePlanControllerApi* | [**deleteMaintenancePlan**](Apis/MaintenancePlanControllerApi.md#deleteMaintenancePlan) | **DELETE** /api/maintenance/plans/{id} |  |
-*MaintenancePlanControllerApi* | [**getAllMaintenancePlans**](Apis/MaintenancePlanControllerApi.md#getAllMaintenancePlans) | **GET** /api/maintenance/plans |  |
+*MaintenancePlanControllerApi* | [**getAllMaintenancePlans**](Apis/MaintenancePlanControllerApi.md#getAllMaintenancePlans) | **GET** /api/maintenance/plans | Get all  maintenance plans with optional filtering and pagination |
 *MaintenancePlanControllerApi* | [**getMaintenancePlan**](Apis/MaintenancePlanControllerApi.md#getMaintenancePlan) | **GET** /api/maintenance/plans/{id} | GET maintenance plan by Id |
-*MaintenancePlanControllerApi* | [**proposeMaintenancePlan**](Apis/MaintenancePlanControllerApi.md#proposeMaintenancePlan) | **POST** /api/maintenance/plans/ai |  |
+*MaintenancePlanControllerApi* | [**proposeMaintenancePlan**](Apis/MaintenancePlanControllerApi.md#proposeMaintenancePlan) | **POST** /api/maintenance/plans/ai | Propose a maintenance plan based on user prompt |
 *MaintenancePlanControllerApi* | [**updateMaintenancePlan**](Apis/MaintenancePlanControllerApi.md#updateMaintenancePlan) | **PUT** /api/maintenance/plans/{id} |  |
 
 

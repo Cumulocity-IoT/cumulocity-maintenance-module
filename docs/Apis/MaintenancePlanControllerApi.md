@@ -7,9 +7,9 @@ All URIs are relative to *http://localhost:8080*
 | [**createMaintenanceAction**](MaintenancePlanControllerApi.md#createMaintenanceAction) | **POST** /api/maintenance/plans/{id}/actions | Create a new maintenance action for maintenance plan |
 | [**createMaintenancePlan**](MaintenancePlanControllerApi.md#createMaintenancePlan) | **POST** /api/maintenance/plans | Create a new maintenance plan |
 | [**deleteMaintenancePlan**](MaintenancePlanControllerApi.md#deleteMaintenancePlan) | **DELETE** /api/maintenance/plans/{id} |  |
-| [**getAllMaintenancePlans**](MaintenancePlanControllerApi.md#getAllMaintenancePlans) | **GET** /api/maintenance/plans |  |
+| [**getAllMaintenancePlans**](MaintenancePlanControllerApi.md#getAllMaintenancePlans) | **GET** /api/maintenance/plans | Get all  maintenance plans with optional filtering and pagination |
 | [**getMaintenancePlan**](MaintenancePlanControllerApi.md#getMaintenancePlan) | **GET** /api/maintenance/plans/{id} | GET maintenance plan by Id |
-| [**proposeMaintenancePlan**](MaintenancePlanControllerApi.md#proposeMaintenancePlan) | **POST** /api/maintenance/plans/ai |  |
+| [**proposeMaintenancePlan**](MaintenancePlanControllerApi.md#proposeMaintenancePlan) | **POST** /api/maintenance/plans/ai | Propose a maintenance plan based on user prompt |
 | [**updateMaintenancePlan**](MaintenancePlanControllerApi.md#updateMaintenancePlan) | **PUT** /api/maintenance/plans/{id} |  |
 
 
@@ -97,17 +97,19 @@ null (empty response body)
 # **getAllMaintenancePlans**
 > MaintenancePlanListResponse getAllMaintenancePlans(active, startDate, endDate, pageSize, pageNumber)
 
+Get all  maintenance plans with optional filtering and pagination
 
+    Returns a list of all maintenance plans in IoT Platform. Additional query parameters allow to filter that list. The default configuration will return all active maintenance plans!
 
 ### Parameters
 
 |Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
-| **active** | **Boolean**|  | [optional] [default to null] |
-| **startDate** | **Date**|  | [optional] [default to null] |
-| **endDate** | **Date**|  | [optional] [default to null] |
-| **pageSize** | **Integer**|  | [optional] [default to 20] |
-| **pageNumber** | **Integer**|  | [optional] [default to 0] |
+| **active** | **Boolean**| Filter by active status | [optional] [default to null] |
+| **startDate** | **Date**| Filter plans starting after this date (ISO 8601 format) | [optional] [default to null] |
+| **endDate** | **Date**| Filter plans ending before this date (ISO 8601 format) | [optional] [default to null] |
+| **pageSize** | **Integer**| Maximum number of items to return (default: 20, max: 100) | [optional] [default to 20] |
+| **pageNumber** | **Integer**| Number of items to skip (default: 0) | [optional] [default to 0] |
 
 ### Return type
 
@@ -153,7 +155,9 @@ GET maintenance plan by Id
 # **proposeMaintenancePlan**
 > MaintenancePlan proposeMaintenancePlan(request\_body)
 
+Propose a maintenance plan based on user prompt
 
+    Generates a maintenance plan proposal using AI based on the provided user prompt
 
 ### Parameters
 
