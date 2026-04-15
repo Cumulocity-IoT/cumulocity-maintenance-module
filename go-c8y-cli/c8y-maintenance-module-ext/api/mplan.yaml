@@ -57,3 +57,11 @@ commands:
     description: Create a new maintenance plan
     method: POST
     path: service/maintenance-module/api/maintenance/plans
+  - name: propose
+    description: Propose a maintenance plan based on a prompt
+    method: POST
+    path: service/maintenance-module/api/maintenance/plans/ai
+    body:
+      - name: userPrompt
+        type: string
+        description: Natural language prompt describing the maintenance plan to propose

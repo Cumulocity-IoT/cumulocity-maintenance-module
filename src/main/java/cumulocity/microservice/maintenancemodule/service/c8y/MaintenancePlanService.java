@@ -161,7 +161,9 @@ public class MaintenancePlanService {
             ### DATA HANDLING RULES
             - If the user does NOT provide an Equipment ID, use "UNKNOWN_EQUIPMENT" as the equipmentId.
             - Generate a random UUID for the "planId".
-            - "frequency" must be one of: DAILY, WEEKLY, MONTHLY, QUARTERLY, ANNUALLY, AS_NEEDED.
+            - Based on the user prompt, determine the most appropriate trigger type (time-based, usage-based, or condition-based) and populate the corresponding fields in the JSON.
+            - In case of time-based triggers, use cron expressions for scheduling (e.g., "0 0 9 * * 1" for every Monday at 9am).
+            - In case of no start date and end date is provided, start with the current date and set the end date to one year from now.
             
             ### OUTPUT FORMAT
             You must return a valid JSON object based strictly on this schema:

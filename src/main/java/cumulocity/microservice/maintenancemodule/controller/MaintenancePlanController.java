@@ -48,7 +48,7 @@ public class MaintenancePlanController {
     @Operation(summary = "Propose a maintenance plan based on user prompt", description = "Generates a maintenance plan proposal using AI based on the provided user prompt", tags = {})
     @PostMapping(path = "/ai", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<MaintenancePlan> proposeMaintenancePlan(@RequestBody Map<String, String> body) {
-        String prompt = body.get("user prompt");
+        String prompt = body.get("userPrompt");
         if (prompt == null || prompt.isBlank()) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
