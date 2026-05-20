@@ -1,0 +1,231 @@
+{
+  "title": "Maintenance Plan Schema",
+  "description": "Schema for defining maintenance plan entries in the system. Each entry includes a unique ID, name, description, start and end dates, an active status, and a list of triggers that activate the maintenance plan. The triggers can be time-based, usage-based, or condition-based.",
+  "version": "1.0.0",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$defs": {
+    "subscription": {
+      "type": "object",
+      "description": "Subscription details for Usage-based and Condition-based triggers.",
+      "properties": {
+        "api": {
+          "type": "string",
+          "enum": [
+            "alarms",
+            "events",
+            "measurements",
+            "managedobjects",
+            "operations"
+          ],
+          "description": "API type (alarms, events, measurements, managedobjects, operations)."
+        },
+        "typeFilter": { "type": "string", "description": "Type filter for the subscription." }
+      },
+      "required": ["api", "typeFilter"],
+      "additionalProperties": false
+    }
+  },
+  "type": "object",
+  "additionalProperties": false,
+  "examples": [
+    {
+      "id": 101,
+      "name": "Quarterly Server Check",
+      "description": "Perform server health checks and updates every quarter.",
+      "notificationType": "alarm",
+      "notificationText": "Quarterly Server Check of device XY.This maintenance task involves checking server health and applying necessary updates.",
+      "startDate": "2025-01-01T08:00:00Z",
+      "endDate": "2025-12-31T17:00:00Z",
+      "active": true,
+      "on": [
+        {
+          "type": "Time-based",
+          "interval": "P3M"
+        }
+      ]
+    }
+  ],
+  "properties": {
+    "id": {
+      "type": "integer",
+      "description": "Unique identifier for the maintenance entry.",
+      "readOnly": true
+    },
+    "name": {
+      "type": "string",
+      "description": "Name of the maintenance entry."
+    },
+    "notificationText": {
+      "type": "string",
+      "description": "Maintenance text which can be used to initialize the maintenance alarm text."
+    },
+    "notificationType": {
+      "type": "string",
+      "enum": ["alarm", "event"],
+      "description": "Maintenance type which can be used to initialize the maintenance alarm type."
+    },
+    "description": {
+      "type": "string",
+      "description": "Detailed description of the maintenance entry."
+    },
+    "startDate": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Start date and time for the maintenance."
+    },
+    "endDate": {
+      "type": "string",
+      "format": "date-time",
+      "description": "End date and time for the maintenance."
+    },
+    "active": {
+      "type": "boolean",
+      "description": "Indicates whether the maintenance entry is active."
+    },
+    "on": {
+      "type": "array",
+      "description": "List of maintenance triggers. The maintenance plan is activated if ANY of these trigger conditions are met (OR connection).",
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["Time-based"],
+                "description": "Type of maintenance trigger."
+              },
+              "interval": {
+                "type": "string",
+                "description": "Interval for time-based maintenance using ISO 8601 duration format.",
+                "pattern": "^P(?!$)(\\d+Y)?(\\d+M)?(\\d+W)?(\\d+D)?(T(?!$)(\\d+H)?(\\d+M)?(\\d+S)?)?$",
+                "examples": ["P3M", "P30D", "P1Y6M"]
+              }
+            },
+            "required": ["type", "interval"],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["Usage-based"],
+                "description": "Usage-based maintenance trigger."
+              },
+              "counter": {
+                "type": "object",
+                "description": "Single counter for usage-based maintenance. Defines the criteria for a usage-based trigger. Examples are operating hours, cycle count, distance and alarm counts.",
+                "properties": {
+                  "subscription": {
+                    "$ref": "#/$defs/subscription"
+                  },
+                  "valueFragment": {
+                    "type": "string",
+                    "description": "Fragment or field to extract the value from. The valueFragment is a JSONPath expression (e.g., $.property.subproperty[0].value, $.items[*]) that specifies the path to the value within the data structure. The pattern provides basic validation for common JSONPath expressions (dot notation, bracket notation with indices or quoted keys, simple wildcards like [*] or .* at the end); full validation for all JSONPath features occurs at runtime."
+                  },
+                  "cycleValue": {
+                    "type": "integer",
+                    "description": "Recurring value counter. This option should be used when the counter is continuesly incremented (e.g., operating hours, cycle count).",
+                    "nullable": true
+                  },
+                  "thresholdValue": {
+                    "type": "integer",
+                    "description": "Threshold (limit) value for the counter. This option should be used when the counter is reset after reaching the threshold.",
+                    "nullable": true
+                  }
+                },
+                "required": ["valueFragment"],
+                "oneOf": [
+                  { "required": ["cycleValue"], "not": { "required": ["thresholdValue"] } },
+                  { "required": ["thresholdValue"], "not": { "required": ["cycleValue"] } }
+                ],
+                "additionalProperties": false,
+                "examples": [
+                  {
+                    "subscription": {
+                      "api": "measurements",
+                      "typeFilter": "operatingHours"
+                    },
+                    "valueFragment": "operatingHours.t",
+                    "cycleValue": 1000
+                  },
+                  {
+                    "subscription": {
+                      "api": "alarms",
+                      "typeFilter": "restartAlarm"
+                    },
+                    "valueFragment": "$.count",
+                    "thresholdValue": 200
+                  }
+                ]
+              }
+            },
+            "required": ["type", "counter"],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["Condition-based"],
+                "description": "Condition-based maintenance trigger."
+              },
+              "conditions": {
+                "type": "array",
+                "description": "List of conditions for condition-based maintenance. The maintenance plan is activated if ALL of these conditions are met (AND connection).",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "subscription": {
+                      "$ref": "#/$defs/subscription"
+                    },
+                    "valueFragment": {
+                      "type": "string",
+                      "description": "Fragment or field to extract the value from. The valueFragment is a JSONPath expression (e.g., $.property.subproperty[0].value, $.items[*]) that specifies the path to the value within the data structure. The pattern provides basic validation for common JSONPath expressions (dot notation, bracket notation with indices or quoted keys, simple wildcards like [*] or .* at the end); full validation for all JSONPath features occurs at runtime."
+                    },
+                    "operator": {
+                      "type": "string",
+                      "enum": ["gt", "lt", "eq"],
+                      "description": "Operator for the condition. Allowed: gt (greater than), lt (less than), eq (equal)."
+                    },
+                    "value": {
+                      "type": ["string", "number"],
+                      "description": "Value to compare against for the condition."
+                    }
+                  },
+                  "required": ["valueFragment", "operator", "value"],
+                  "additionalProperties": false,
+                  "examples": [
+                    {
+                      "subscription": {
+                        "api": "measurements",
+                        "typeFilter": "c8y_Temperature"
+                      },
+                      "valueFragment": "c8y_Temperature.t",
+                      "operator": "gt",
+                      "value": "199"
+                    },
+                    {
+                      "subscription": {
+                        "api": "alarms",
+                        "typeFilter": "restartAlarm"
+                      },
+                      "valueFragment": "$.status",
+                      "operator": "eq",
+                      "value": "ACTIVE"
+                    }
+                  ]
+                }
+              }
+            },
+            "required": ["type", "conditions"],
+            "additionalProperties": false
+          }
+        ]
+      }
+    }
+  },
+  "required": ["id", "name", "startDate", "endDate", "active", "on"]
+}

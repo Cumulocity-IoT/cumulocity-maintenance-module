@@ -1,0 +1,59 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/reubenmiller/go-c8y-cli/v2/tools/schema/extensionCommands.json
+---
+group:
+  name: mplan
+  description: Manage maintenance plans
+
+commands:
+  - name: list
+    description: Get List of maintenance plans
+    method: GET
+    path: service/maintenance-module/api/maintenance-plans
+    queryParameters:
+      - name: active
+        type: boolean
+        description: filter for active and deactive maintenance plans
+  - name: get
+    description: Get a maintenance plan by id
+    method: GET
+    path: service/maintenance-module/api/maintenance-plans/{id}
+    pathParameters:
+      - name: id
+        type: string
+        description: Maintenance plan ID
+        pipeline: true
+        completion:
+          type: external
+          command: 
+            - c8y
+            - maintenance-module-ext
+            - mplan
+            - list
+            - --select 
+            - id,title 
+            - --output 
+            - completion
+  - name: delete
+    description: Delete a maintenance plan by id
+    method: DELETE
+    path: service/maintenance-module/api/maintenance-plans/{id}
+    pathParameters:
+      - name: id
+        type: string
+        description: Maintenance plan ID
+        pipeline: true
+        completion:
+          type: external
+          command: 
+            - c8y
+            - maintenance-module-ext
+            - mplan
+            - list
+            - --select 
+            - id,title 
+            - --output 
+            - completion
+  - name: create
+    description: Create a new maintenance plan
+    method: POST
+    path: service/maintenance-module/api/maintenance-plans
